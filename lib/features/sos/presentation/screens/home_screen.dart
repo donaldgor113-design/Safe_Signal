@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:safe_signal/app/theme.dart';
 import 'package:safe_signal/core/constants/app_constants.dart';
+import 'package:safe_signal/features/medical_profile/presentation/providers/medical_profile_provider.dart';
+import 'package:safe_signal/features/contacts/presentation/providers/contacts_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -11,6 +13,17 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final ssColors = theme.extension<SafeSignalColors>()!;
+    final profileAsync = ref.watch(medicalProfileStreamProvider);
+    final contactsAsync = ref.watch(contactsStreamProvider);
+
+    final profileIncomplete = profileAsync.whenOrNull(
+          data: (p) => p.diagnoses.isEmpty,
+        ) ??
+        true;
+    final noContacts = contactsAsync.whenOrNull(
+          data: (c) => c.isEmpty,
+        ) ??
+        true;
 
     return Scaffold(
       appBar: AppBar(
@@ -24,7 +37,15 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          _StatusBar(ssColors: ssColors),
+          _StatusBar(
+            ssColors: ssColors,
+            profileComplete: !profileIncomplete,
+          ),
+          if (profileIncomplete || noContacts)
+            _CompletenessBanner(
+              profileIncomplete: profileIncomplete,
+              noContacts: noContacts,
+            ),
           Expanded(
             child: Center(
               child: _SosButton(ssColors: ssColors),
@@ -38,10 +59,69 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+class _CompletenessBanner extends StatelessWidget {
+  final bool profileIncomplete;
+  final bool noContacts;
+  const _CompletenessBanner({
+    required this.profileIncomplete,
+    required this.noContacts,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ssColors = theme.extension<SafeSignalColors>()!;
+    final messages = <String>[];
+    if (profileIncomplete) messages.add('медпрофіль');
+    if (noContacts) messages.add('контакти');
+
+    return GestureDetector(
+      onTap: () {
+        if (profileIncomplete) {
+          context.go('/profile');
+        } else {
+          context.go('/contacts');
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+            ssColors.statusWarning.withAlpha(30),
+            theme.colorScheme.surface,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: ssColors.statusWarning.withAlpha(80)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded,
+                color: ssColors.statusWarning, size: 20),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Заповніть ${messages.join(" та ")} для оповіщення',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+            Icon(Icons.chevron_right,
+                size: 18, color: theme.colorScheme.outline),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _StatusBar extends StatelessWidget {
   final SafeSignalColors ssColors;
+  final bool profileComplete;
 
-  const _StatusBar({required this.ssColors});
+  const _StatusBar({
+    required this.ssColors,
+    required this.profileComplete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +150,10 @@ class _StatusBar extends StatelessWidget {
           ),
           _StatusIcon(
             icon: Icons.medical_information,
-            label: 'Неповний',
-            color: ssColors.statusWarning,
+            label: profileComplete ? 'Профіль' : 'Неповний',
+            color: profileComplete
+                ? ssColors.statusActive
+                : ssColors.statusWarning,
           ),
         ],
       ),

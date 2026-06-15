@@ -1,0 +1,1722 @@
+From 8432c632b54625ef866bd7baa59169022446711f Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 15 Jun 2026 20:05:32 +0000
+Subject: [PATCH] feat: add Week 3-4 Medical Profile and Contacts features
+
+- Medical profile: full form with diagnoses, medications, allergies, blood type, doctor contact
+- Medical profile: Firestore CRUD repository with StreamProvider
+- Contacts: list screen with cards, swipe-to-delete, empty state
+- Contacts: add/edit form with validation and channel selection
+- Contacts: Firestore CRUD repository with StreamProvider
+- Telegram Chat ID instructions dialog
+- Profile completeness banner and status icon on home screen
+- Updated PROGRESS.md
+
+https://claude.ai/code/session_01XjDtEs3jxLu9VyebmKjRHi
+---
+ SafeSignal_PROGRESS.md                        |  40 +-
+ .../contacts/data/models/contact_model.dart   |  72 +++
+ .../repositories/contacts_repository.dart     |  84 ++++
+ .../domain/entities/contact_entity.dart       |  32 ++
+ .../providers/contacts_provider.dart          |  16 +
+ .../screens/add_contact_screen.dart           | 286 ++++++++++-
+ .../presentation/screens/contacts_screen.dart | 178 ++++++-
+ .../data/models/medical_profile_model.dart    | 134 +++++
+ .../medical_profile_repository.dart           |  55 +++
+ .../entities/medical_profile_entity.dart      |  47 ++
+ .../providers/medical_profile_provider.dart   |  18 +
+ .../screens/medical_profile_screen.dart       | 462 +++++++++++++++++-
+ .../sos/presentation/screens/home_screen.dart |  90 +++-
+ 13 files changed, 1465 insertions(+), 49 deletions(-)
+ create mode 100644 lib/features/contacts/data/models/contact_model.dart
+ create mode 100644 lib/features/contacts/data/repositories/contacts_repository.dart
+ create mode 100644 lib/features/contacts/domain/entities/contact_entity.dart
+ create mode 100644 lib/features/contacts/presentation/providers/contacts_provider.dart
+ create mode 100644 lib/features/medical_profile/data/models/medical_profile_model.dart
+ create mode 100644 lib/features/medical_profile/data/repositories/medical_profile_repository.dart
+ create mode 100644 lib/features/medical_profile/domain/entities/medical_profile_entity.dart
+ create mode 100644 lib/features/medical_profile/presentation/providers/medical_profile_provider.dart
+
+diff --git a/SafeSignal_PROGRESS.md b/SafeSignal_PROGRESS.md
+index cbf075a..fa46f97 100644
+--- a/SafeSignal_PROGRESS.md
++++ b/SafeSignal_PROGRESS.md
+@@ -1,7 +1,7 @@
+ # SafeSignal — Progress Tracker
+ 
+-**Початок розробки:** TBD  
+-**Поточна фаза:** Тиждень 1–2 (Фундамент)
++**Початок розробки:** 2026-06-15  
++**Поточна фаза:** Тиждень 3–4 (Медпрофіль і контакти)
+ 
+ ---
+ 
+@@ -9,29 +9,29 @@
+ 
+ | Задача | Статус | Дата | Примітки |
+ |---|---|---|---|
+-| Flutter проект (FlutterFire CLI) | - | | |
+-| Firebase Auth (email/пароль + Google) | - | | |
+-| GoRouter навігація (всі маршрути, заглушки) | - | | |
+-| Riverpod структура (base providers) | - | | |
+-| Базова тема (Material 3, кольори, шрифти) | - | | |
+-| Hive ініціалізація (boxes: offline_queue, gps_log, app_settings) | - | | |
+-| flutter_secure_storage setup | - | | |
+-| Splash screen + auth redirect | - | | |
+-| Onboarding (3 slides) | - | | |
+-| Disclaimer dialog (перший запуск) | - | | |
++| Flutter проект (FlutterFire CLI) | DONE | 2026-06-15 | Firebase core + all plugins in pubspec |
++| Firebase Auth (email/пароль + Google) | DONE | 2026-06-15 | Email/password done; Google Sign-In — ще не реалізовано |
++| GoRouter навігація (всі маршрути, заглушки) | DONE | 2026-06-15 | Всі маршрути + redirect logic |
++| Riverpod структура (base providers) | DONE | 2026-06-15 | Manual providers (без codegen) |
++| Базова тема (Material 3, кольори, шрифти) | DONE | 2026-06-15 | Light/dark + SafeSignalColors extension |
++| Hive ініціалізація (boxes: offline_queue, gps_log, app_settings) | DONE | 2026-06-15 | 3 boxes в main.dart |
++| flutter_secure_storage setup | WIP | 2026-06-15 | Залежність додана, використання — ні |
++| Splash screen + auth redirect | DONE | 2026-06-15 | Auth + onboarding gate |
++| Onboarding (3 slides) | DONE | 2026-06-15 | 3 слайди + completion flow |
++| Disclaimer dialog (перший запуск) | WIP | 2026-06-15 | Текст є, UI dialog — ні |
+ 
+ ## Тиждень 3–4: Медпрофіль і контакти
+ 
+ | Задача | Статус | Дата | Примітки |
+ |---|---|---|---|
+-| Medical profile screen (all fields) | - | | |
+-| Medical profile — Firestore CRUD | - | | |
+-| Medical profile — local encryption (flutter_secure_storage) | - | | |
+-| Contacts list screen | - | | |
+-| Contact add/edit screen | - | | |
+-| Contacts — Firestore CRUD | - | | |
+-| Telegram Chat ID — instructions UI | - | | |
+-| Profile completeness banner (home screen) | - | | |
++| Medical profile screen (all fields) | DONE | 2026-06-15 | Diagnoses, meds, allergies, blood type, doctor contact |
++| Medical profile — Firestore CRUD | DONE | 2026-06-15 | Repository + StreamProvider |
++| Medical profile — local encryption (flutter_secure_storage) | - | | Deferred — Firestore offline persistence used for now |
++| Contacts list screen | DONE | 2026-06-15 | Cards + swipe-to-delete + empty state |
++| Contact add/edit screen | DONE | 2026-06-15 | Full form with validation |
++| Contacts — Firestore CRUD | DONE | 2026-06-15 | Repository + StreamProvider |
++| Telegram Chat ID — instructions UI | DONE | 2026-06-15 | Dialog with step-by-step instructions |
++| Profile completeness banner (home screen) | DONE | 2026-06-15 | Warning banner + status bar icon |
+ 
+ ## Тиждень 5–6: SOS Flow
+ 
+diff --git a/lib/features/contacts/data/models/contact_model.dart b/lib/features/contacts/data/models/contact_model.dart
+new file mode 100644
+index 0000000..06271a4
+--- /dev/null
++++ b/lib/features/contacts/data/models/contact_model.dart
+@@ -0,0 +1,72 @@
++import 'package:cloud_firestore/cloud_firestore.dart';
++import 'package:safe_signal/features/contacts/domain/entities/contact_entity.dart';
++
++class ContactModel {
++  final String id;
++  final String name;
++  final String phone;
++  final String? telegramChatId;
++  final String? email;
++  final String relationship;
++  final List<NotifyChannel> notifyChannels;
++
++  const ContactModel({
++    required this.id,
++    required this.name,
++    required this.phone,
++    this.telegramChatId,
++    this.email,
++    required this.relationship,
++    required this.notifyChannels,
++  });
++
++  factory ContactModel.fromFirestore(DocumentSnapshot doc) {
++    final data = doc.data() as Map<String, dynamic>? ?? {};
++    return ContactModel(
++      id: doc.id,
++      name: data['name'] as String? ?? '',
++      phone: data['phone'] as String? ?? '',
++      telegramChatId: data['telegramChatId'] as String?,
++      email: data['email'] as String?,
++      relationship: data['relationship'] as String? ?? 'Інше',
++      notifyChannels: (data['notifyChannels'] as List<dynamic>?)
++              ?.map((e) => NotifyChannel.values.firstWhere(
++                    (v) => v.name == e,
++                    orElse: () => NotifyChannel.sms,
++                  ))
++              .toList() ??
++          [NotifyChannel.sms],
++    );
++  }
++
++  Map<String, dynamic> toMap() => {
++        'name': name,
++        'phone': phone,
++        'telegramChatId': telegramChatId,
++        'email': email,
++        'relationship': relationship,
++        'notifyChannels': notifyChannels.map((c) => c.name).toList(),
++      };
++
++  ContactEntity toEntity() => ContactEntity(
++        id: id,
++        name: name,
++        phone: phone,
++        telegramChatId: telegramChatId,
++        email: email,
++        relationship: relationship,
++        notifyChannels: notifyChannels,
++      );
++
++  factory ContactModel.fromEntity(ContactEntity entity) {
++    return ContactModel(
++      id: entity.id,
++      name: entity.name,
++      phone: entity.phone,
++      telegramChatId: entity.telegramChatId,
++      email: entity.email,
++      relationship: entity.relationship,
++      notifyChannels: entity.notifyChannels,
++    );
++  }
++}
+diff --git a/lib/features/contacts/data/repositories/contacts_repository.dart b/lib/features/contacts/data/repositories/contacts_repository.dart
+new file mode 100644
+index 0000000..b407386
+--- /dev/null
++++ b/lib/features/contacts/data/repositories/contacts_repository.dart
+@@ -0,0 +1,84 @@
++import 'package:cloud_firestore/cloud_firestore.dart';
++import 'package:firebase_auth/firebase_auth.dart';
++import 'package:safe_signal/core/constants/firebase_constants.dart';
++import 'package:safe_signal/core/errors/exceptions.dart';
++import 'package:safe_signal/features/contacts/data/models/contact_model.dart';
++
++class ContactsRepository {
++  final FirebaseFirestore _firestore;
++  final FirebaseAuth _auth;
++
++  ContactsRepository({
++    FirebaseFirestore? firestore,
++    FirebaseAuth? auth,
++  })  : _firestore = firestore ?? FirebaseFirestore.instance,
++        _auth = auth ?? FirebaseAuth.instance;
++
++  String get _userId => _auth.currentUser!.uid;
++
++  CollectionReference get _contactsRef => _firestore
++      .collection(FirebaseConstants.contactsCollection)
++      .doc(_userId)
++      .collection(FirebaseConstants.contactItemsSubcollection);
++
++  Stream<List<ContactModel>> watchContacts() {
++    return _contactsRef.snapshots().map((snapshot) =>
++        snapshot.docs.map((doc) => ContactModel.fromFirestore(doc)).toList());
++  }
++
++  Future<List<ContactModel>> getContacts() async {
++    try {
++      final snapshot = await _contactsRef.get();
++      return snapshot.docs
++          .map((doc) => ContactModel.fromFirestore(doc))
++          .toList();
++    } on FirebaseException catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    } catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    }
++  }
++
++  Future<ContactModel?> getContact(String contactId) async {
++    try {
++      final doc = await _contactsRef.doc(contactId).get();
++      if (!doc.exists) return null;
++      return ContactModel.fromFirestore(doc);
++    } on FirebaseException catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    } catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    }
++  }
++
++  Future<String> addContact(ContactModel contact) async {
++    try {
++      final doc = await _contactsRef.add(contact.toMap());
++      return doc.id;
++    } on FirebaseException catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    } catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    }
++  }
++
++  Future<void> updateContact(ContactModel contact) async {
++    try {
++      await _contactsRef.doc(contact.id).update(contact.toMap());
++    } on FirebaseException catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    } catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    }
++  }
++
++  Future<void> deleteContact(String contactId) async {
++    try {
++      await _contactsRef.doc(contactId).delete();
++    } on FirebaseException catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    } catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    }
++  }
++}
+diff --git a/lib/features/contacts/domain/entities/contact_entity.dart b/lib/features/contacts/domain/entities/contact_entity.dart
+new file mode 100644
+index 0000000..5c5fd29
+--- /dev/null
++++ b/lib/features/contacts/domain/entities/contact_entity.dart
+@@ -0,0 +1,32 @@
++enum NotifyChannel { sms, telegram }
++
++class ContactEntity {
++  final String id;
++  final String name;
++  final String phone;
++  final String? telegramChatId;
++  final String? email;
++  final String relationship;
++  final List<NotifyChannel> notifyChannels;
++
++  const ContactEntity({
++    required this.id,
++    required this.name,
++    required this.phone,
++    this.telegramChatId,
++    this.email,
++    required this.relationship,
++    required this.notifyChannels,
++  });
++
++  static const List<String> relationshipOptions = [
++    'Дружина',
++    'Чоловік',
++    'Мати',
++    'Батько',
++    'Дитина',
++    'Лікар',
++    'Друг',
++    'Інше',
++  ];
++}
+diff --git a/lib/features/contacts/presentation/providers/contacts_provider.dart b/lib/features/contacts/presentation/providers/contacts_provider.dart
+new file mode 100644
+index 0000000..d391e80
+--- /dev/null
++++ b/lib/features/contacts/presentation/providers/contacts_provider.dart
+@@ -0,0 +1,16 @@
++import 'package:flutter_riverpod/flutter_riverpod.dart';
++import 'package:safe_signal/features/contacts/data/models/contact_model.dart';
++import 'package:safe_signal/features/contacts/data/repositories/contacts_repository.dart';
++
++final contactsRepositoryProvider = Provider<ContactsRepository>((ref) {
++  return ContactsRepository();
++});
++
++final contactsStreamProvider = StreamProvider<List<ContactModel>>((ref) {
++  return ref.watch(contactsRepositoryProvider).watchContacts();
++});
++
++final contactProvider =
++    FutureProvider.family<ContactModel?, String>((ref, contactId) async {
++  return ref.watch(contactsRepositoryProvider).getContact(contactId);
++});
+diff --git a/lib/features/contacts/presentation/screens/add_contact_screen.dart b/lib/features/contacts/presentation/screens/add_contact_screen.dart
+index 9f06010..9fef4d3 100644
+--- a/lib/features/contacts/presentation/screens/add_contact_screen.dart
++++ b/lib/features/contacts/presentation/screens/add_contact_screen.dart
+@@ -1,23 +1,293 @@
+ import 'package:flutter/material.dart';
++import 'package:flutter_riverpod/flutter_riverpod.dart';
++import 'package:go_router/go_router.dart';
++import 'package:safe_signal/app/theme.dart';
++import 'package:safe_signal/core/utils/validators.dart';
++import 'package:safe_signal/features/contacts/data/models/contact_model.dart';
++import 'package:safe_signal/features/contacts/domain/entities/contact_entity.dart';
++import 'package:safe_signal/features/contacts/presentation/providers/contacts_provider.dart';
+ 
+-class AddContactScreen extends StatelessWidget {
++class AddContactScreen extends ConsumerStatefulWidget {
+   final String? contactId;
+ 
+   const AddContactScreen({super.key, this.contactId});
+ 
++  @override
++  ConsumerState<AddContactScreen> createState() => _AddContactScreenState();
++}
++
++class _AddContactScreenState extends ConsumerState<AddContactScreen> {
++  final _formKey = GlobalKey<FormState>();
++  bool _isSaving = false;
++  bool _loaded = false;
++
++  final _nameController = TextEditingController();
++  final _phoneController = TextEditingController();
++  final _emailController = TextEditingController();
++  final _telegramChatIdController = TextEditingController();
++
++  String _relationship = ContactEntity.relationshipOptions.first;
++  bool _smsEnabled = true;
++  bool _telegramEnabled = false;
++
++  bool get _isEditing => widget.contactId != null;
++
++  @override
++  void dispose() {
++    _nameController.dispose();
++    _phoneController.dispose();
++    _emailController.dispose();
++    _telegramChatIdController.dispose();
++    super.dispose();
++  }
++
++  void _populateFromContact(ContactModel contact) {
++    if (_loaded) return;
++    _loaded = true;
++    _nameController.text = contact.name;
++    _phoneController.text = contact.phone;
++    _emailController.text = contact.email ?? '';
++    _telegramChatIdController.text = contact.telegramChatId ?? '';
++    _relationship = contact.relationship;
++    _smsEnabled = contact.notifyChannels.contains(NotifyChannel.sms);
++    _telegramEnabled = contact.notifyChannels.contains(NotifyChannel.telegram);
++  }
++
++  Future<void> _save() async {
++    if (!_formKey.currentState!.validate()) return;
++
++    final channels = <NotifyChannel>[];
++    if (_smsEnabled) channels.add(NotifyChannel.sms);
++    if (_telegramEnabled) channels.add(NotifyChannel.telegram);
++
++    if (channels.isEmpty) {
++      ScaffoldMessenger.of(context).showSnackBar(
++        const SnackBar(content: Text('Оберіть хоча б один канал оповіщення')),
++      );
++      return;
++    }
++
++    setState(() => _isSaving = true);
++    try {
++      final contact = ContactModel(
++        id: widget.contactId ?? '',
++        name: _nameController.text.trim(),
++        phone: _phoneController.text.trim(),
++        email: _emailController.text.trim().isEmpty
++            ? null
++            : _emailController.text.trim(),
++        telegramChatId: _telegramChatIdController.text.trim().isEmpty
++            ? null
++            : _telegramChatIdController.text.trim(),
++        relationship: _relationship,
++        notifyChannels: channels,
++      );
++
++      final repo = ref.read(contactsRepositoryProvider);
++      if (_isEditing) {
++        await repo.updateContact(contact);
++      } else {
++        await repo.addContact(contact);
++      }
++
++      if (mounted) context.pop();
++    } catch (e) {
++      if (mounted) {
++        ScaffoldMessenger.of(context).showSnackBar(
++          SnackBar(content: Text('Помилка: $e')),
++        );
++      }
++    } finally {
++      if (mounted) setState(() => _isSaving = false);
++    }
++  }
++
++  void _showTelegramInstructions() {
++    showDialog(
++      context: context,
++      builder: (ctx) => AlertDialog(
++        title: const Text('Як отримати Telegram Chat ID'),
++        content: const Column(
++          mainAxisSize: MainAxisSize.min,
++          crossAxisAlignment: CrossAxisAlignment.start,
++          children: [
++            Text('1. Контакт відкриває бота SafeSignal в Telegram'),
++            SizedBox(height: 8),
++            Text('2. Натискає /start'),
++            SizedBox(height: 8),
++            Text('3. Бот відповідає повідомленням з Chat ID'),
++            SizedBox(height: 8),
++            Text('4. Контакт надсилає вам цей Chat ID'),
++            SizedBox(height: 16),
++            Text(
++              'Chat ID — це число, наприклад: 123456789',
++              style: TextStyle(fontStyle: FontStyle.italic),
++            ),
++          ],
++        ),
++        actions: [
++          FilledButton(
++            onPressed: () => Navigator.pop(ctx),
++            child: const Text('Зрозуміло'),
++          ),
++        ],
++      ),
++    );
++  }
++
+   @override
+   Widget build(BuildContext context) {
+-    final isEditing = contactId != null;
++    final theme = Theme.of(context);
+ 
+     return Scaffold(
+       appBar: AppBar(
+-        title: Text(isEditing ? 'Редагувати контакт' : 'Додати контакт'),
++        title: Text(_isEditing ? 'Редагувати контакт' : 'Додати контакт'),
+       ),
+-      body: Center(
+-        child: Text(
+-          isEditing ? 'Редагування: $contactId' : 'Новий контакт — Тиждень 3',
+-          style: Theme.of(context).textTheme.bodyLarge,
+-        ),
++      body: _isEditing
++          ? ref.watch(contactProvider(widget.contactId!)).when(
++                loading: () =>
++                    const Center(child: CircularProgressIndicator()),
++                error: (e, _) => Center(child: Text('Помилка: $e')),
++                data: (contact) {
++                  if (contact == null) {
++                    return const Center(child: Text('Контакт не знайдено'));
++                  }
++                  _populateFromContact(contact);
++                  return _buildForm(theme);
++                },
++              )
++          : _buildForm(theme),
++    );
++  }
++
++  Widget _buildForm(ThemeData theme) {
++    return Form(
++      key: _formKey,
++      child: ListView(
++        padding: const EdgeInsets.all(AppSpacing.lg),
++        children: [
++          TextFormField(
++            controller: _nameController,
++            decoration: const InputDecoration(labelText: "Ім'я *"),
++            validator: (v) => Validators.required(v, "Ім'я"),
++            textInputAction: TextInputAction.next,
++          ),
++          const SizedBox(height: AppSpacing.lg),
++          TextFormField(
++            controller: _phoneController,
++            decoration: const InputDecoration(
++              labelText: 'Номер телефону *',
++              hintText: '+380501234567',
++            ),
++            keyboardType: TextInputType.phone,
++            validator: Validators.phone,
++            textInputAction: TextInputAction.next,
++          ),
++          const SizedBox(height: AppSpacing.lg),
++          DropdownButtonFormField<String>(
++            value: _relationship,
++            decoration: const InputDecoration(labelText: 'Відношення *'),
++            items: ContactEntity.relationshipOptions
++                .map((r) => DropdownMenuItem(value: r, child: Text(r)))
++                .toList(),
++            onChanged: (v) {
++              if (v != null) setState(() => _relationship = v);
++            },
++          ),
++          const SizedBox(height: AppSpacing.lg),
++          TextFormField(
++            controller: _emailController,
++            decoration: const InputDecoration(
++              labelText: 'Email',
++              hintText: 'contact@example.com',
++            ),
++            keyboardType: TextInputType.emailAddress,
++            validator: (v) {
++              if (v != null && v.trim().isNotEmpty) {
++                return Validators.email(v);
++              }
++              return null;
++            },
++            textInputAction: TextInputAction.next,
++          ),
++          const SizedBox(height: AppSpacing.lg),
++          Row(
++            crossAxisAlignment: CrossAxisAlignment.end,
++            children: [
++              Expanded(
++                child: TextFormField(
++                  controller: _telegramChatIdController,
++                  decoration: const InputDecoration(
++                    labelText: 'Telegram Chat ID',
++                    hintText: '123456789',
++                  ),
++                  keyboardType: TextInputType.number,
++                ),
++              ),
++              const SizedBox(width: AppSpacing.sm),
++              IconButton(
++                onPressed: _showTelegramInstructions,
++                icon: const Icon(Icons.help_outline),
++                tooltip: 'Як отримати Chat ID',
++              ),
++            ],
++          ),
++          const SizedBox(height: AppSpacing.xl),
++          Text(
++            'Канали оповіщення *',
++            style: theme.textTheme.titleMedium
++                ?.copyWith(fontWeight: FontWeight.w600),
++          ),
++          const SizedBox(height: AppSpacing.sm),
++          CheckboxListTile(
++            value: _smsEnabled,
++            onChanged: (v) => setState(() => _smsEnabled = v ?? false),
++            title: const Text('SMS'),
++            subtitle: const Text('Повідомлення через Twilio'),
++            secondary: const Icon(Icons.sms_outlined),
++            controlAffinity: ListTileControlAffinity.leading,
++            shape: RoundedRectangleBorder(
++              borderRadius: BorderRadius.circular(12),
++            ),
++          ),
++          CheckboxListTile(
++            value: _telegramEnabled,
++            onChanged: (v) => setState(() => _telegramEnabled = v ?? false),
++            title: const Text('Telegram'),
++            subtitle: const Text('Потрібен Chat ID контакту'),
++            secondary: const Icon(Icons.send_outlined),
++            controlAffinity: ListTileControlAffinity.leading,
++            shape: RoundedRectangleBorder(
++              borderRadius: BorderRadius.circular(12),
++            ),
++          ),
++          const SizedBox(height: AppSpacing.xxl),
++          Row(
++            children: [
++              Expanded(
++                child: FilledButton.tonal(
++                  onPressed: () => context.pop(),
++                  child: const Text('Скасувати'),
++                ),
++              ),
++              const SizedBox(width: AppSpacing.lg),
++              Expanded(
++                child: FilledButton(
++                  onPressed: _isSaving ? null : _save,
++                  child: _isSaving
++                      ? const SizedBox(
++                          height: 20,
++                          width: 20,
++                          child:
++                              CircularProgressIndicator(strokeWidth: 2),
++                        )
++                      : const Text('Зберегти'),
++                ),
++              ),
++            ],
++          ),
++          const SizedBox(height: AppSpacing.lg),
++        ],
+       ),
+     );
+   }
+diff --git a/lib/features/contacts/presentation/screens/contacts_screen.dart b/lib/features/contacts/presentation/screens/contacts_screen.dart
+index d233cd8..f54854d 100644
+--- a/lib/features/contacts/presentation/screens/contacts_screen.dart
++++ b/lib/features/contacts/presentation/screens/contacts_screen.dart
+@@ -1,20 +1,182 @@
+ import 'package:flutter/material.dart';
++import 'package:flutter_riverpod/flutter_riverpod.dart';
++import 'package:go_router/go_router.dart';
+ import 'package:safe_signal/app/theme.dart';
++import 'package:safe_signal/features/contacts/data/models/contact_model.dart';
++import 'package:safe_signal/features/contacts/domain/entities/contact_entity.dart';
++import 'package:safe_signal/features/contacts/presentation/providers/contacts_provider.dart';
+ 
+-class ContactsScreen extends StatelessWidget {
++class ContactsScreen extends ConsumerWidget {
+   const ContactsScreen({super.key});
+ 
+   @override
+-  Widget build(BuildContext context) {
++  Widget build(BuildContext context, WidgetRef ref) {
++    final contactsAsync = ref.watch(contactsStreamProvider);
++    final theme = Theme.of(context);
++
+     return Scaffold(
+       appBar: AppBar(title: const Text('Контакти')),
+-      body: Center(
+-        child: Padding(
+-          padding: const EdgeInsets.all(AppSpacing.lg),
+-          child: Text(
+-            'Контакти — Тиждень 3',
+-            style: Theme.of(context).textTheme.bodyLarge,
++      floatingActionButton: FloatingActionButton(
++        onPressed: () => context.push('/contacts/add'),
++        child: const Icon(Icons.add),
++      ),
++      body: contactsAsync.when(
++        loading: () => const Center(child: CircularProgressIndicator()),
++        error: (e, _) => Center(child: Text('Помилка: $e')),
++        data: (contacts) {
++          if (contacts.isEmpty) {
++            return Center(
++              child: Padding(
++                padding: const EdgeInsets.all(AppSpacing.xxl),
++                child: Column(
++                  mainAxisSize: MainAxisSize.min,
++                  children: [
++                    Icon(
++                      Icons.people_outline,
++                      size: 64,
++                      color: theme.colorScheme.outline,
++                    ),
++                    const SizedBox(height: AppSpacing.lg),
++                    Text(
++                      'Немає контактів',
++                      style: theme.textTheme.titleMedium,
++                    ),
++                    const SizedBox(height: AppSpacing.sm),
++                    Text(
++                      'Додайте екстрені контакти для оповіщення',
++                      style: theme.textTheme.bodyMedium?.copyWith(
++                        color: theme.colorScheme.outline,
++                      ),
++                      textAlign: TextAlign.center,
++                    ),
++                    const SizedBox(height: AppSpacing.xl),
++                    FilledButton.icon(
++                      onPressed: () => context.push('/contacts/add'),
++                      icon: const Icon(Icons.add),
++                      label: const Text('Додати контакт'),
++                    ),
++                  ],
++                ),
++              ),
++            );
++          }
++
++          return ListView.builder(
++            padding: const EdgeInsets.all(AppSpacing.lg),
++            itemCount: contacts.length,
++            itemBuilder: (context, index) {
++              return _ContactCard(contact: contacts[index]);
++            },
++          );
++        },
++      ),
++    );
++  }
++}
++
++class _ContactCard extends ConsumerWidget {
++  final ContactModel contact;
++  const _ContactCard({required this.contact});
++
++  @override
++  Widget build(BuildContext context, WidgetRef ref) {
++    final theme = Theme.of(context);
++
++    return Dismissible(
++      key: ValueKey(contact.id),
++      direction: DismissDirection.endToStart,
++      background: Container(
++        alignment: Alignment.centerRight,
++        padding: const EdgeInsets.only(right: AppSpacing.xl),
++        decoration: BoxDecoration(
++          color: theme.colorScheme.error,
++          borderRadius: BorderRadius.circular(16),
++        ),
++        child: Icon(Icons.delete, color: theme.colorScheme.onError),
++      ),
++      confirmDismiss: (_) async {
++        return await showDialog<bool>(
++          context: context,
++          builder: (ctx) => AlertDialog(
++            title: const Text('Видалити контакт?'),
++            content: Text('${contact.name} буде видалено зі списку'),
++            actions: [
++              TextButton(
++                onPressed: () => Navigator.pop(ctx, false),
++                child: const Text('Скасувати'),
++              ),
++              FilledButton(
++                onPressed: () => Navigator.pop(ctx, true),
++                child: const Text('Видалити'),
++              ),
++            ],
+           ),
++        );
++      },
++      onDismissed: (_) {
++        ref.read(contactsRepositoryProvider).deleteContact(contact.id);
++      },
++      child: Card(
++        margin: const EdgeInsets.only(bottom: AppSpacing.md),
++        child: ListTile(
++          contentPadding: const EdgeInsets.symmetric(
++            horizontal: AppSpacing.lg,
++            vertical: AppSpacing.sm,
++          ),
++          leading: CircleAvatar(
++            backgroundColor: theme.colorScheme.primaryContainer,
++            child: Text(
++              contact.name.isNotEmpty ? contact.name[0].toUpperCase() : '?',
++              style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
++            ),
++          ),
++          title: Text(contact.name),
++          subtitle: Column(
++            crossAxisAlignment: CrossAxisAlignment.start,
++            children: [
++              Text(contact.relationship),
++              const SizedBox(height: AppSpacing.xs),
++              Row(
++                children: [
++                  if (contact.notifyChannels.contains(NotifyChannel.sms))
++                    _ChannelBadge(label: 'SMS', theme: theme),
++                  if (contact.notifyChannels.contains(NotifyChannel.telegram))
++                    Padding(
++                      padding: const EdgeInsets.only(left: AppSpacing.xs),
++                      child: _ChannelBadge(label: 'Telegram', theme: theme),
++                    ),
++                ],
++              ),
++            ],
++          ),
++          trailing: const Icon(Icons.chevron_right),
++          onTap: () => context.push('/contacts/${contact.id}'),
++        ),
++      ),
++    );
++  }
++}
++
++class _ChannelBadge extends StatelessWidget {
++  final String label;
++  final ThemeData theme;
++  const _ChannelBadge({required this.label, required this.theme});
++
++  @override
++  Widget build(BuildContext context) {
++    return Container(
++      padding: const EdgeInsets.symmetric(
++        horizontal: AppSpacing.sm,
++        vertical: 2,
++      ),
++      decoration: BoxDecoration(
++        color: theme.colorScheme.secondaryContainer,
++        borderRadius: BorderRadius.circular(8),
++      ),
++      child: Text(
++        label,
++        style: theme.textTheme.labelSmall?.copyWith(
++          color: theme.colorScheme.onSecondaryContainer,
+         ),
+       ),
+     );
+diff --git a/lib/features/medical_profile/data/models/medical_profile_model.dart b/lib/features/medical_profile/data/models/medical_profile_model.dart
+new file mode 100644
+index 0000000..3b3a08f
+--- /dev/null
++++ b/lib/features/medical_profile/data/models/medical_profile_model.dart
+@@ -0,0 +1,134 @@
++import 'package:cloud_firestore/cloud_firestore.dart';
++import 'package:safe_signal/features/medical_profile/domain/entities/medical_profile_entity.dart';
++
++class MedicationModel {
++  final String name;
++  final String dose;
++  final String frequency;
++
++  const MedicationModel({
++    required this.name,
++    required this.dose,
++    required this.frequency,
++  });
++
++  factory MedicationModel.fromMap(Map<String, dynamic> map) {
++    return MedicationModel(
++      name: map['name'] as String? ?? '',
++      dose: map['dose'] as String? ?? '',
++      frequency: map['frequency'] as String? ?? '',
++    );
++  }
++
++  Map<String, dynamic> toMap() => {
++        'name': name,
++        'dose': dose,
++        'frequency': frequency,
++      };
++
++  MedicationEntity toEntity() => MedicationEntity(
++        name: name,
++        dose: dose,
++        frequency: frequency,
++      );
++
++  factory MedicationModel.fromEntity(MedicationEntity entity) {
++    return MedicationModel(
++      name: entity.name,
++      dose: entity.dose,
++      frequency: entity.frequency,
++    );
++  }
++}
++
++class MedicalProfileModel {
++  final List<String> diagnoses;
++  final List<MedicationModel> medications;
++  final List<String> allergies;
++  final String? bloodType;
++  final String? doctorName;
++  final String? doctorPhone;
++  final String? clinicName;
++  final String? clinicPhone;
++  final DateTime updatedAt;
++
++  const MedicalProfileModel({
++    required this.diagnoses,
++    required this.medications,
++    required this.allergies,
++    this.bloodType,
++    this.doctorName,
++    this.doctorPhone,
++    this.clinicName,
++    this.clinicPhone,
++    required this.updatedAt,
++  });
++
++  factory MedicalProfileModel.fromFirestore(DocumentSnapshot doc) {
++    final data = doc.data() as Map<String, dynamic>? ?? {};
++    return MedicalProfileModel.fromMap(data);
++  }
++
++  factory MedicalProfileModel.fromMap(Map<String, dynamic> map) {
++    return MedicalProfileModel(
++      diagnoses: List<String>.from(map['diagnoses'] ?? []),
++      medications: (map['medications'] as List<dynamic>?)
++              ?.map((e) => MedicationModel.fromMap(e as Map<String, dynamic>))
++              .toList() ??
++          [],
++      allergies: List<String>.from(map['allergies'] ?? []),
++      bloodType: map['bloodType'] as String?,
++      doctorName: map['doctorName'] as String?,
++      doctorPhone: map['doctorPhone'] as String?,
++      clinicName: map['clinicName'] as String?,
++      clinicPhone: map['clinicPhone'] as String?,
++      updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
++    );
++  }
++
++  Map<String, dynamic> toMap() => {
++        'diagnoses': diagnoses,
++        'medications': medications.map((m) => m.toMap()).toList(),
++        'allergies': allergies,
++        'bloodType': bloodType,
++        'doctorName': doctorName,
++        'doctorPhone': doctorPhone,
++        'clinicName': clinicName,
++        'clinicPhone': clinicPhone,
++        'updatedAt': FieldValue.serverTimestamp(),
++      };
++
++  MedicalProfileEntity toEntity() => MedicalProfileEntity(
++        diagnoses: diagnoses,
++        medications: medications.map((m) => m.toEntity()).toList(),
++        allergies: allergies,
++        bloodType: bloodType,
++        doctorName: doctorName,
++        doctorPhone: doctorPhone,
++        clinicName: clinicName,
++        clinicPhone: clinicPhone,
++        updatedAt: updatedAt,
++      );
++
++  factory MedicalProfileModel.fromEntity(MedicalProfileEntity entity) {
++    return MedicalProfileModel(
++      diagnoses: entity.diagnoses,
++      medications:
++          entity.medications.map((m) => MedicationModel.fromEntity(m)).toList(),
++      allergies: entity.allergies,
++      bloodType: entity.bloodType,
++      doctorName: entity.doctorName,
++      doctorPhone: entity.doctorPhone,
++      clinicName: entity.clinicName,
++      clinicPhone: entity.clinicPhone,
++      updatedAt: entity.updatedAt,
++    );
++  }
++
++  static MedicalProfileModel empty() => MedicalProfileModel(
++        diagnoses: const [],
++        medications: const [],
++        allergies: const [],
++        updatedAt: DateTime.now(),
++      );
++}
+diff --git a/lib/features/medical_profile/data/repositories/medical_profile_repository.dart b/lib/features/medical_profile/data/repositories/medical_profile_repository.dart
+new file mode 100644
+index 0000000..7d88817
+--- /dev/null
++++ b/lib/features/medical_profile/data/repositories/medical_profile_repository.dart
+@@ -0,0 +1,55 @@
++import 'package:cloud_firestore/cloud_firestore.dart';
++import 'package:firebase_auth/firebase_auth.dart';
++import 'package:safe_signal/core/constants/firebase_constants.dart';
++import 'package:safe_signal/core/errors/exceptions.dart';
++import 'package:safe_signal/features/medical_profile/data/models/medical_profile_model.dart';
++
++class MedicalProfileRepository {
++  final FirebaseFirestore _firestore;
++  final FirebaseAuth _auth;
++
++  MedicalProfileRepository({
++    FirebaseFirestore? firestore,
++    FirebaseAuth? auth,
++  })  : _firestore = firestore ?? FirebaseFirestore.instance,
++        _auth = auth ?? FirebaseAuth.instance;
++
++  String get _userId => _auth.currentUser!.uid;
++
++  DocumentReference get _docRef => _firestore
++      .collection(FirebaseConstants.medicalProfilesCollection)
++      .doc(_userId);
++
++  Future<MedicalProfileModel> getMedicalProfile() async {
++    try {
++      final doc = await _docRef.get();
++      if (!doc.exists) {
++        return MedicalProfileModel.empty();
++      }
++      return MedicalProfileModel.fromFirestore(doc);
++    } on FirebaseException catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    } catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    }
++  }
++
++  Stream<MedicalProfileModel> watchMedicalProfile() {
++    return _docRef.snapshots().map((doc) {
++      if (!doc.exists) {
++        return MedicalProfileModel.empty();
++      }
++      return MedicalProfileModel.fromFirestore(doc);
++    });
++  }
++
++  Future<void> saveMedicalProfile(MedicalProfileModel profile) async {
++    try {
++      await _docRef.set(profile.toMap(), SetOptions(merge: true));
++    } on FirebaseException catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    } catch (e) {
++      throw FirestoreException(technicalDetails: e.toString());
++    }
++  }
++}
+diff --git a/lib/features/medical_profile/domain/entities/medical_profile_entity.dart b/lib/features/medical_profile/domain/entities/medical_profile_entity.dart
+new file mode 100644
+index 0000000..cda63ba
+--- /dev/null
++++ b/lib/features/medical_profile/domain/entities/medical_profile_entity.dart
+@@ -0,0 +1,47 @@
++class MedicationEntity {
++  final String name;
++  final String dose;
++  final String frequency;
++
++  const MedicationEntity({
++    required this.name,
++    required this.dose,
++    required this.frequency,
++  });
++}
++
++class MedicalProfileEntity {
++  final List<String> diagnoses;
++  final List<MedicationEntity> medications;
++  final List<String> allergies;
++  final String? bloodType;
++  final String? doctorName;
++  final String? doctorPhone;
++  final String? clinicName;
++  final String? clinicPhone;
++  final DateTime updatedAt;
++
++  const MedicalProfileEntity({
++    required this.diagnoses,
++    required this.medications,
++    required this.allergies,
++    this.bloodType,
++    this.doctorName,
++    this.doctorPhone,
++    this.clinicName,
++    this.clinicPhone,
++    required this.updatedAt,
++  });
++
++  bool get isComplete =>
++      diagnoses.isNotEmpty &&
++      bloodType != null &&
++      bloodType!.isNotEmpty;
++
++  static MedicalProfileEntity empty() => MedicalProfileEntity(
++        diagnoses: const [],
++        medications: const [],
++        allergies: const [],
++        updatedAt: DateTime.now(),
++      );
++}
+diff --git a/lib/features/medical_profile/presentation/providers/medical_profile_provider.dart b/lib/features/medical_profile/presentation/providers/medical_profile_provider.dart
+new file mode 100644
+index 0000000..ee390c2
+--- /dev/null
++++ b/lib/features/medical_profile/presentation/providers/medical_profile_provider.dart
+@@ -0,0 +1,18 @@
++import 'package:flutter_riverpod/flutter_riverpod.dart';
++import 'package:safe_signal/features/medical_profile/data/models/medical_profile_model.dart';
++import 'package:safe_signal/features/medical_profile/data/repositories/medical_profile_repository.dart';
++
++final medicalProfileRepositoryProvider =
++    Provider<MedicalProfileRepository>((ref) {
++  return MedicalProfileRepository();
++});
++
++final medicalProfileStreamProvider =
++    StreamProvider<MedicalProfileModel>((ref) {
++  return ref.watch(medicalProfileRepositoryProvider).watchMedicalProfile();
++});
++
++final medicalProfileProvider =
++    FutureProvider<MedicalProfileModel>((ref) async {
++  return ref.watch(medicalProfileRepositoryProvider).getMedicalProfile();
++});
+diff --git a/lib/features/medical_profile/presentation/screens/medical_profile_screen.dart b/lib/features/medical_profile/presentation/screens/medical_profile_screen.dart
+index d75c55b..0aadc67 100644
+--- a/lib/features/medical_profile/presentation/screens/medical_profile_screen.dart
++++ b/lib/features/medical_profile/presentation/screens/medical_profile_screen.dart
+@@ -1,21 +1,465 @@
+ import 'package:flutter/material.dart';
++import 'package:flutter_riverpod/flutter_riverpod.dart';
+ import 'package:safe_signal/app/theme.dart';
++import 'package:safe_signal/core/utils/validators.dart';
++import 'package:safe_signal/features/medical_profile/data/models/medical_profile_model.dart';
++import 'package:safe_signal/features/medical_profile/presentation/providers/medical_profile_provider.dart';
+ 
+-class MedicalProfileScreen extends StatelessWidget {
++class MedicalProfileScreen extends ConsumerStatefulWidget {
+   const MedicalProfileScreen({super.key});
+ 
++  @override
++  ConsumerState<MedicalProfileScreen> createState() =>
++      _MedicalProfileScreenState();
++}
++
++class _MedicalProfileScreenState extends ConsumerState<MedicalProfileScreen> {
++  final _formKey = GlobalKey<FormState>();
++  bool _isSaving = false;
++
++  final _bloodTypeController = TextEditingController();
++  final _doctorNameController = TextEditingController();
++  final _doctorPhoneController = TextEditingController();
++  final _clinicNameController = TextEditingController();
++  final _clinicPhoneController = TextEditingController();
++
++  final _diagnosisInputController = TextEditingController();
++  final _allergyInputController = TextEditingController();
++  final _medNameController = TextEditingController();
++  final _medDoseController = TextEditingController();
++  final _medFreqController = TextEditingController();
++
++  List<String> _diagnoses = [];
++  List<MedicationModel> _medications = [];
++  List<String> _allergies = [];
++  bool _loaded = false;
++
++  static const _bloodTypes = [
++    'O(I) Rh+',
++    'O(I) Rh-',
++    'A(II) Rh+',
++    'A(II) Rh-',
++    'B(III) Rh+',
++    'B(III) Rh-',
++    'AB(IV) Rh+',
++    'AB(IV) Rh-',
++  ];
++
++  static const _commonAllergies = [
++    'Пеніцилін',
++    'Аспірин',
++    'Йод',
++    'Латекс',
++    'Арахіс',
++    'Молоко',
++  ];
++
++  @override
++  void dispose() {
++    _bloodTypeController.dispose();
++    _doctorNameController.dispose();
++    _doctorPhoneController.dispose();
++    _clinicNameController.dispose();
++    _clinicPhoneController.dispose();
++    _diagnosisInputController.dispose();
++    _allergyInputController.dispose();
++    _medNameController.dispose();
++    _medDoseController.dispose();
++    _medFreqController.dispose();
++    super.dispose();
++  }
++
++  void _populateFromModel(MedicalProfileModel model) {
++    if (_loaded) return;
++    _loaded = true;
++    _diagnoses = List.from(model.diagnoses);
++    _medications = List.from(model.medications);
++    _allergies = List.from(model.allergies);
++    _bloodTypeController.text = model.bloodType ?? '';
++    _doctorNameController.text = model.doctorName ?? '';
++    _doctorPhoneController.text = model.doctorPhone ?? '';
++    _clinicNameController.text = model.clinicName ?? '';
++    _clinicPhoneController.text = model.clinicPhone ?? '';
++  }
++
++  Future<void> _save() async {
++    if (!_formKey.currentState!.validate()) return;
++
++    setState(() => _isSaving = true);
++    try {
++      final profile = MedicalProfileModel(
++        diagnoses: _diagnoses,
++        medications: _medications,
++        allergies: _allergies,
++        bloodType: _bloodTypeController.text.trim().isEmpty
++            ? null
++            : _bloodTypeController.text.trim(),
++        doctorName: _doctorNameController.text.trim().isEmpty
++            ? null
++            : _doctorNameController.text.trim(),
++        doctorPhone: _doctorPhoneController.text.trim().isEmpty
++            ? null
++            : _doctorPhoneController.text.trim(),
++        clinicName: _clinicNameController.text.trim().isEmpty
++            ? null
++            : _clinicNameController.text.trim(),
++        clinicPhone: _clinicPhoneController.text.trim().isEmpty
++            ? null
++            : _clinicPhoneController.text.trim(),
++        updatedAt: DateTime.now(),
++      );
++
++      await ref
++          .read(medicalProfileRepositoryProvider)
++          .saveMedicalProfile(profile);
++
++      ref.invalidate(medicalProfileStreamProvider);
++      ref.invalidate(medicalProfileProvider);
++
++      if (mounted) {
++        ScaffoldMessenger.of(context).showSnackBar(
++          const SnackBar(content: Text('Профіль збережено')),
++        );
++      }
++    } catch (e) {
++      if (mounted) {
++        ScaffoldMessenger.of(context).showSnackBar(
++          SnackBar(content: Text('Помилка: $e')),
++        );
++      }
++    } finally {
++      if (mounted) setState(() => _isSaving = false);
++    }
++  }
++
++  void _addDiagnosis() {
++    final text = _diagnosisInputController.text.trim();
++    if (text.isEmpty) return;
++    setState(() {
++      _diagnoses.add(text);
++      _diagnosisInputController.clear();
++    });
++  }
++
++  void _addAllergy(String allergy) {
++    if (_allergies.contains(allergy)) return;
++    setState(() => _allergies.add(allergy));
++  }
++
++  void _addCustomAllergy() {
++    final text = _allergyInputController.text.trim();
++    if (text.isEmpty || _allergies.contains(text)) return;
++    setState(() {
++      _allergies.add(text);
++      _allergyInputController.clear();
++    });
++  }
++
++  void _addMedication() {
++    final name = _medNameController.text.trim();
++    final dose = _medDoseController.text.trim();
++    final freq = _medFreqController.text.trim();
++    if (name.isEmpty || dose.isEmpty || freq.isEmpty) return;
++    setState(() {
++      _medications.add(MedicationModel(name: name, dose: dose, frequency: freq));
++      _medNameController.clear();
++      _medDoseController.clear();
++      _medFreqController.clear();
++    });
++  }
++
+   @override
+   Widget build(BuildContext context) {
++    final profileAsync = ref.watch(medicalProfileStreamProvider);
++    final theme = Theme.of(context);
++
+     return Scaffold(
+       appBar: AppBar(title: const Text('Медичний профіль')),
+-      body: Center(
+-        child: Padding(
+-          padding: const EdgeInsets.all(AppSpacing.lg),
+-          child: Text(
+-            'Медичний профіль — Тиждень 3',
+-            style: Theme.of(context).textTheme.bodyLarge,
+-          ),
+-        ),
++      body: profileAsync.when(
++        loading: () => const Center(child: CircularProgressIndicator()),
++        error: (e, _) => Center(child: Text('Помилка: $e')),
++        data: (profile) {
++          _populateFromModel(profile);
++          return _buildForm(theme);
++        },
++      ),
++    );
++  }
++
++  Widget _buildForm(ThemeData theme) {
++    return Form(
++      key: _formKey,
++      child: ListView(
++        padding: const EdgeInsets.all(AppSpacing.lg),
++        children: [
++          if (_diagnoses.isEmpty)
++            _IncompleteBanner(
++              message: 'Заповніть медпрофіль для кращого оповіщення',
++            ),
++          _SectionHeader(title: 'Діагнози'),
++          const SizedBox(height: AppSpacing.sm),
++          Wrap(
++            spacing: AppSpacing.sm,
++            runSpacing: AppSpacing.sm,
++            children: _diagnoses
++                .map((d) => Chip(
++                      label: Text(d),
++                      onDeleted: () =>
++                          setState(() => _diagnoses.remove(d)),
++                    ))
++                .toList(),
++          ),
++          const SizedBox(height: AppSpacing.sm),
++          Row(
++            children: [
++              Expanded(
++                child: TextFormField(
++                  controller: _diagnosisInputController,
++                  decoration: const InputDecoration(
++                    labelText: 'Додати діагноз',
++                    hintText: 'Наприклад: Епілепсія',
++                  ),
++                  onFieldSubmitted: (_) => _addDiagnosis(),
++                ),
++              ),
++              const SizedBox(width: AppSpacing.sm),
++              IconButton.filled(
++                onPressed: _addDiagnosis,
++                icon: const Icon(Icons.add),
++              ),
++            ],
++          ),
++          const SizedBox(height: AppSpacing.xl),
++          _SectionHeader(title: 'Ліки'),
++          const SizedBox(height: AppSpacing.sm),
++          ..._medications.asMap().entries.map((entry) => Card(
++                margin: const EdgeInsets.only(bottom: AppSpacing.sm),
++                child: ListTile(
++                  title: Text(entry.value.name),
++                  subtitle:
++                      Text('${entry.value.dose} — ${entry.value.frequency}'),
++                  trailing: IconButton(
++                    icon: const Icon(Icons.delete_outline),
++                    onPressed: () => setState(
++                        () => _medications.removeAt(entry.key)),
++                  ),
++                ),
++              )),
++          Card(
++            child: Padding(
++              padding: const EdgeInsets.all(AppSpacing.md),
++              child: Column(
++                children: [
++                  TextFormField(
++                    controller: _medNameController,
++                    decoration:
++                        const InputDecoration(labelText: 'Назва препарату'),
++                  ),
++                  const SizedBox(height: AppSpacing.sm),
++                  Row(
++                    children: [
++                      Expanded(
++                        child: TextFormField(
++                          controller: _medDoseController,
++                          decoration: const InputDecoration(
++                            labelText: 'Дозування',
++                            hintText: '12.5мг',
++                          ),
++                        ),
++                      ),
++                      const SizedBox(width: AppSpacing.sm),
++                      Expanded(
++                        child: TextFormField(
++                          controller: _medFreqController,
++                          decoration: const InputDecoration(
++                            labelText: 'Частота',
++                            hintText: '2 рази на день',
++                          ),
++                        ),
++                      ),
++                    ],
++                  ),
++                  const SizedBox(height: AppSpacing.sm),
++                  Align(
++                    alignment: Alignment.centerRight,
++                    child: FilledButton.tonalIcon(
++                      onPressed: _addMedication,
++                      icon: const Icon(Icons.add),
++                      label: const Text('Додати'),
++                    ),
++                  ),
++                ],
++              ),
++            ),
++          ),
++          const SizedBox(height: AppSpacing.xl),
++          _SectionHeader(title: 'Алергії'),
++          const SizedBox(height: AppSpacing.sm),
++          Wrap(
++            spacing: AppSpacing.sm,
++            runSpacing: AppSpacing.sm,
++            children: [
++              ..._commonAllergies.map((a) => FilterChip(
++                    label: Text(a),
++                    selected: _allergies.contains(a),
++                    onSelected: (selected) {
++                      setState(() {
++                        if (selected) {
++                          _addAllergy(a);
++                        } else {
++                          _allergies.remove(a);
++                        }
++                      });
++                    },
++                  )),
++              ..._allergies
++                  .where((a) => !_commonAllergies.contains(a))
++                  .map((a) => Chip(
++                        label: Text(a),
++                        onDeleted: () =>
++                            setState(() => _allergies.remove(a)),
++                      )),
++            ],
++          ),
++          const SizedBox(height: AppSpacing.sm),
++          Row(
++            children: [
++              Expanded(
++                child: TextFormField(
++                  controller: _allergyInputController,
++                  decoration: const InputDecoration(
++                    labelText: 'Інша алергія',
++                  ),
++                  onFieldSubmitted: (_) => _addCustomAllergy(),
++                ),
++              ),
++              const SizedBox(width: AppSpacing.sm),
++              IconButton.filled(
++                onPressed: _addCustomAllergy,
++                icon: const Icon(Icons.add),
++              ),
++            ],
++          ),
++          const SizedBox(height: AppSpacing.xl),
++          _SectionHeader(title: 'Медичні дані'),
++          const SizedBox(height: AppSpacing.sm),
++          DropdownButtonFormField<String>(
++            value: _bloodTypeController.text.isEmpty
++                ? null
++                : _bloodTypeController.text,
++            decoration: const InputDecoration(
++              labelText: 'Група крові',
++            ),
++            items: _bloodTypes
++                .map((t) => DropdownMenuItem(value: t, child: Text(t)))
++                .toList(),
++            onChanged: (value) {
++              _bloodTypeController.text = value ?? '';
++            },
++          ),
++          const SizedBox(height: AppSpacing.xl),
++          _SectionHeader(title: 'Контакт лікаря'),
++          const SizedBox(height: AppSpacing.sm),
++          TextFormField(
++            controller: _doctorNameController,
++            decoration: const InputDecoration(labelText: "Ім'я лікаря"),
++          ),
++          const SizedBox(height: AppSpacing.md),
++          TextFormField(
++            controller: _doctorPhoneController,
++            decoration: const InputDecoration(
++              labelText: 'Телефон лікаря',
++              hintText: '+380501234567',
++            ),
++            keyboardType: TextInputType.phone,
++            validator: (value) {
++              if (value != null && value.trim().isNotEmpty) {
++                return Validators.phone(value);
++              }
++              return null;
++            },
++          ),
++          const SizedBox(height: AppSpacing.md),
++          TextFormField(
++            controller: _clinicNameController,
++            decoration: const InputDecoration(labelText: 'Назва клініки'),
++          ),
++          const SizedBox(height: AppSpacing.md),
++          TextFormField(
++            controller: _clinicPhoneController,
++            decoration: const InputDecoration(
++              labelText: 'Телефон клініки',
++              hintText: '+380441234567',
++            ),
++            keyboardType: TextInputType.phone,
++            validator: (value) {
++              if (value != null && value.trim().isNotEmpty) {
++                return Validators.phone(value);
++              }
++              return null;
++            },
++          ),
++          const SizedBox(height: AppSpacing.xxl),
++          FilledButton(
++            onPressed: _isSaving ? null : _save,
++            child: _isSaving
++                ? const SizedBox(
++                    height: 20,
++                    width: 20,
++                    child: CircularProgressIndicator(strokeWidth: 2),
++                  )
++                : const Text('Зберегти'),
++          ),
++          const SizedBox(height: AppSpacing.lg),
++        ],
++      ),
++    );
++  }
++}
++
++class _SectionHeader extends StatelessWidget {
++  final String title;
++  const _SectionHeader({required this.title});
++
++  @override
++  Widget build(BuildContext context) {
++    return Text(
++      title,
++      style: Theme.of(context)
++          .textTheme
++          .titleMedium
++          ?.copyWith(fontWeight: FontWeight.w600),
++    );
++  }
++}
++
++class _IncompleteBanner extends StatelessWidget {
++  final String message;
++  const _IncompleteBanner({required this.message});
++
++  @override
++  Widget build(BuildContext context) {
++    final theme = Theme.of(context);
++    return Container(
++      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
++      padding: const EdgeInsets.all(AppSpacing.md),
++      decoration: BoxDecoration(
++        color: theme.colorScheme.primaryContainer,
++        borderRadius: BorderRadius.circular(12),
++      ),
++      child: Row(
++        children: [
++          Icon(Icons.info_outline, color: theme.colorScheme.primary),
++          const SizedBox(width: AppSpacing.sm),
++          Expanded(
++            child: Text(
++              message,
++              style: theme.textTheme.bodySmall?.copyWith(
++                color: theme.colorScheme.onPrimaryContainer,
++              ),
++            ),
++          ),
++        ],
+       ),
+     );
+   }
+diff --git a/lib/features/sos/presentation/screens/home_screen.dart b/lib/features/sos/presentation/screens/home_screen.dart
+index f141217..f399c23 100644
+--- a/lib/features/sos/presentation/screens/home_screen.dart
++++ b/lib/features/sos/presentation/screens/home_screen.dart
+@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
+ import 'package:go_router/go_router.dart';
+ import 'package:safe_signal/app/theme.dart';
+ import 'package:safe_signal/core/constants/app_constants.dart';
++import 'package:safe_signal/features/medical_profile/presentation/providers/medical_profile_provider.dart';
++import 'package:safe_signal/features/contacts/presentation/providers/contacts_provider.dart';
+ 
+ class HomeScreen extends ConsumerWidget {
+   const HomeScreen({super.key});
+@@ -11,6 +13,17 @@ class HomeScreen extends ConsumerWidget {
+   Widget build(BuildContext context, WidgetRef ref) {
+     final theme = Theme.of(context);
+     final ssColors = theme.extension<SafeSignalColors>()!;
++    final profileAsync = ref.watch(medicalProfileStreamProvider);
++    final contactsAsync = ref.watch(contactsStreamProvider);
++
++    final profileIncomplete = profileAsync.whenOrNull(
++          data: (p) => p.diagnoses.isEmpty,
++        ) ??
++        true;
++    final noContacts = contactsAsync.whenOrNull(
++          data: (c) => c.isEmpty,
++        ) ??
++        true;
+ 
+     return Scaffold(
+       appBar: AppBar(
+@@ -24,7 +37,15 @@ class HomeScreen extends ConsumerWidget {
+       ),
+       body: Column(
+         children: [
+-          _StatusBar(ssColors: ssColors),
++          _StatusBar(
++            ssColors: ssColors,
++            profileComplete: !profileIncomplete,
++          ),
++          if (profileIncomplete || noContacts)
++            _CompletenessBanner(
++              profileIncomplete: profileIncomplete,
++              noContacts: noContacts,
++            ),
+           Expanded(
+             child: Center(
+               child: _SosButton(ssColors: ssColors),
+@@ -38,10 +59,69 @@ class HomeScreen extends ConsumerWidget {
+   }
+ }
+ 
++class _CompletenessBanner extends StatelessWidget {
++  final bool profileIncomplete;
++  final bool noContacts;
++  const _CompletenessBanner({
++    required this.profileIncomplete,
++    required this.noContacts,
++  });
++
++  @override
++  Widget build(BuildContext context) {
++    final theme = Theme.of(context);
++    final ssColors = theme.extension<SafeSignalColors>()!;
++    final messages = <String>[];
++    if (profileIncomplete) messages.add('медпрофіль');
++    if (noContacts) messages.add('контакти');
++
++    return GestureDetector(
++      onTap: () {
++        if (profileIncomplete) {
++          context.go('/profile');
++        } else {
++          context.go('/contacts');
++        }
++      },
++      child: Container(
++        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
++        padding: const EdgeInsets.all(AppSpacing.md),
++        decoration: BoxDecoration(
++          color: Color.alphaBlend(
++            ssColors.statusWarning.withAlpha(30),
++            theme.colorScheme.surface,
++          ),
++          borderRadius: BorderRadius.circular(12),
++          border: Border.all(color: ssColors.statusWarning.withAlpha(80)),
++        ),
++        child: Row(
++          children: [
++            Icon(Icons.warning_amber_rounded,
++                color: ssColors.statusWarning, size: 20),
++            const SizedBox(width: AppSpacing.sm),
++            Expanded(
++              child: Text(
++                'Заповніть ${messages.join(" та ")} для оповіщення',
++                style: theme.textTheme.bodySmall,
++              ),
++            ),
++            Icon(Icons.chevron_right,
++                size: 18, color: theme.colorScheme.outline),
++          ],
++        ),
++      ),
++    );
++  }
++}
++
+ class _StatusBar extends StatelessWidget {
+   final SafeSignalColors ssColors;
++  final bool profileComplete;
+ 
+-  const _StatusBar({required this.ssColors});
++  const _StatusBar({
++    required this.ssColors,
++    required this.profileComplete,
++  });
+ 
+   @override
+   Widget build(BuildContext context) {
+@@ -70,8 +150,10 @@ class _StatusBar extends StatelessWidget {
+           ),
+           _StatusIcon(
+             icon: Icons.medical_information,
+-            label: 'Неповний',
+-            color: ssColors.statusWarning,
++            label: profileComplete ? 'Профіль' : 'Неповний',
++            color: profileComplete
++                ? ssColors.statusActive
++                : ssColors.statusWarning,
+           ),
+         ],
+       ),
+-- 
+2.43.0
+

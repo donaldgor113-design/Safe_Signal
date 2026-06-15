@@ -1,7 +1,7 @@
 # SafeSignal — Progress Tracker
 
-**Початок розробки:** TBD  
-**Поточна фаза:** Тиждень 1–2 (Фундамент)
+**Початок розробки:** 2026-06-15  
+**Поточна фаза:** Тиждень 3–4 (Медпрофіль і контакти)
 
 ---
 
@@ -9,29 +9,29 @@
 
 | Задача | Статус | Дата | Примітки |
 |---|---|---|---|
-| Flutter проект (FlutterFire CLI) | - | | |
-| Firebase Auth (email/пароль + Google) | - | | |
-| GoRouter навігація (всі маршрути, заглушки) | - | | |
-| Riverpod структура (base providers) | - | | |
-| Базова тема (Material 3, кольори, шрифти) | - | | |
-| Hive ініціалізація (boxes: offline_queue, gps_log, app_settings) | - | | |
-| flutter_secure_storage setup | - | | |
-| Splash screen + auth redirect | - | | |
-| Onboarding (3 slides) | - | | |
-| Disclaimer dialog (перший запуск) | - | | |
+| Flutter проект (FlutterFire CLI) | DONE | 2026-06-15 | Firebase core + all plugins in pubspec |
+| Firebase Auth (email/пароль + Google) | DONE | 2026-06-15 | Email/password done; Google Sign-In — ще не реалізовано |
+| GoRouter навігація (всі маршрути, заглушки) | DONE | 2026-06-15 | Всі маршрути + redirect logic |
+| Riverpod структура (base providers) | DONE | 2026-06-15 | Manual providers (без codegen) |
+| Базова тема (Material 3, кольори, шрифти) | DONE | 2026-06-15 | Light/dark + SafeSignalColors extension |
+| Hive ініціалізація (boxes: offline_queue, gps_log, app_settings) | DONE | 2026-06-15 | 3 boxes в main.dart |
+| flutter_secure_storage setup | WIP | 2026-06-15 | Залежність додана, використання — ні |
+| Splash screen + auth redirect | DONE | 2026-06-15 | Auth + onboarding gate |
+| Onboarding (3 slides) | DONE | 2026-06-15 | 3 слайди + completion flow |
+| Disclaimer dialog (перший запуск) | WIP | 2026-06-15 | Текст є, UI dialog — ні |
 
 ## Тиждень 3–4: Медпрофіль і контакти
 
 | Задача | Статус | Дата | Примітки |
 |---|---|---|---|
-| Medical profile screen (all fields) | - | | |
-| Medical profile — Firestore CRUD | - | | |
-| Medical profile — local encryption (flutter_secure_storage) | - | | |
-| Contacts list screen | - | | |
-| Contact add/edit screen | - | | |
-| Contacts — Firestore CRUD | - | | |
-| Telegram Chat ID — instructions UI | - | | |
-| Profile completeness banner (home screen) | - | | |
+| Medical profile screen (all fields) | DONE | 2026-06-15 | Diagnoses, meds, allergies, blood type, doctor contact |
+| Medical profile — Firestore CRUD | DONE | 2026-06-15 | Repository + StreamProvider |
+| Medical profile — local encryption (flutter_secure_storage) | - | | Deferred — Firestore offline persistence used for now |
+| Contacts list screen | DONE | 2026-06-15 | Cards + swipe-to-delete + empty state |
+| Contact add/edit screen | DONE | 2026-06-15 | Full form with validation |
+| Contacts — Firestore CRUD | DONE | 2026-06-15 | Repository + StreamProvider |
+| Telegram Chat ID — instructions UI | DONE | 2026-06-15 | Dialog with step-by-step instructions |
+| Profile completeness banner (home screen) | DONE | 2026-06-15 | Warning banner + status bar icon |
 
 ## Тиждень 5–6: SOS Flow
 
