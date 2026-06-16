@@ -38,7 +38,7 @@ class ScenariosRepository {
           .doc(_userId)
           .collection(FirebaseConstants.scenarioItemsSubcollection)
           .doc(scenario.id)
-          .update(scenario.toMap());
+          .update(scenario.toUpdateMap());
     } on FirebaseException catch (e) {
       throw FirestoreException(technicalDetails: e.message);
     }

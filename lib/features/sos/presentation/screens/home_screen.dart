@@ -5,8 +5,10 @@ import 'package:safe_signal/app/theme.dart';
 import 'package:safe_signal/core/constants/app_constants.dart';
 import 'package:safe_signal/features/medical_profile/presentation/providers/medical_profile_provider.dart';
 import 'package:safe_signal/features/contacts/presentation/providers/contacts_provider.dart';
+import 'package:safe_signal/features/sos/presentation/providers/sos_provider.dart';
 import 'package:safe_signal/features/scenarios/presentation/providers/scenarios_provider.dart';
 import 'package:safe_signal/core/services/shake_detection_service.dart';
+import 'package:safe_signal/core/services/immobility_detection_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -17,15 +19,19 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _shakeService = ShakeDetectionService();
+  final _immobilityService = ImmobilityDetectionService();
 
   @override
   void initState() {
     super.initState();
     _shakeService.start(
       onShakeDetected: () {
-        if (mounted) {
-          _showShakeConfirmation();
-        }
+        if (mounted) _showConfirmation('Виявлено трясіння');
+      },
+    );
+    _immobilityService.start(
+      onImmobilityDetected: () {
+        if (mounted) _showConfirmation('Виявлено нерухомість');
       },
     );
   }
@@ -33,18 +39,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void dispose() {
     _shakeService.stop();
+    _immobilityService.stop();
     super.dispose();
   }
 
-  void _showShakeConfirmation() {
+  void _showConfirmation(String title) {
     showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Виявлено трясіння'),
+        title: Text(title),
         content: const Text('Відправити SOS сигнал?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () {
+              Navigator.pop(ctx, false);
+              _immobilityService.resetTimer();
+            },
             child: const Text('Скасувати'),
           ),
           FilledButton(
@@ -61,6 +71,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(offlineQueueServiceProvider);
     final theme = Theme.of(context);
     final ssColors = theme.extension<SafeSignalColors>()!;
     final profileAsync = ref.watch(medicalProfileStreamProvider);

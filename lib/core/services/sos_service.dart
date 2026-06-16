@@ -196,6 +196,70 @@ class SosService {
     );
   }
 
+  Future<void> startAutoTriggerSos({
+    TriggerType triggerType = TriggerType.immobility,
+  }) async {
+    _isCancelled = false;
+    _emit(const SosProgress(phase: SosPhase.sending));
+
+    final userId = _auth.currentUser?.uid ?? '';
+
+    LocationResult? locationResult;
+    try {
+      locationResult = await _locationService.getCurrentLocation();
+      _emit(_progress.copyWith(gpsObtained: true));
+    } catch (_) {}
+
+    final connectivity = await Connectivity().checkConnectivity();
+    final isOffline = connectivity.contains(ConnectivityResult.none);
+
+    if (isOffline) {
+      await _queueOffline(
+        userId: userId,
+        locationResult: locationResult,
+        videoFile: null,
+        triggerType: triggerType,
+      );
+      _emit(_progress.copyWith(phase: SosPhase.done, offlineQueued: true));
+      return;
+    }
+
+    try {
+      final alert = AlertModel(
+        id: '',
+        userId: userId,
+        scenarioId: 'default',
+        triggeredAt: DateTime.now(),
+        triggerType: triggerType,
+        latitude: locationResult?.latitude ?? 0.0,
+        longitude: locationResult?.longitude ?? 0.0,
+        locationAddress: locationResult?.address,
+        videoUrl: null,
+        sentChannels: const [],
+        deliveryStatus: const {},
+      );
+
+      final alertId = await _alertRepository.createAlert(alert);
+      _emit(_progress.copyWith(
+        phase: SosPhase.done,
+        alertSaved: true,
+        alertId: alertId,
+      ));
+    } on FirestoreException catch (e) {
+      await _queueOffline(
+        userId: userId,
+        locationResult: locationResult,
+        videoFile: null,
+        triggerType: triggerType,
+      );
+      _emit(_progress.copyWith(
+        phase: SosPhase.done,
+        offlineQueued: true,
+        errorMessage: e.message,
+      ));
+    }
+  }
+
   Future<void> _sendAlert({
     LocationResult? locationResult,
     File? videoFile,
@@ -285,13 +349,14 @@ class SosService {
     required String userId,
     LocationResult? locationResult,
     File? videoFile,
+    TriggerType triggerType = TriggerType.manual,
   }) async {
     final box = Hive.box('offline_queue');
     final entry = {
       'localId': const Uuid().v4(),
       'userId': userId,
       'scenarioId': 'default',
-      'triggerType': TriggerType.manual.name,
+      'triggerType': triggerType.name,
       'latitude': locationResult?.latitude ?? 0.0,
       'longitude': locationResult?.longitude ?? 0.0,
       'locationAddress': locationResult?.address,

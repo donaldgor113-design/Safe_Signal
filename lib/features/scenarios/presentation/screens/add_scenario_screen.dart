@@ -75,6 +75,13 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
       return;
     }
 
+    if (_templateController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Шаблон повідомлення не може бути порожнім')),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
     try {
       final scenario = ScenarioModel(
@@ -83,9 +90,9 @@ class _AddScenarioScreenState extends ConsumerState<AddScenarioScreen> {
         name: _nameController.text.trim(),
         contactIds: _selectedContactIds,
         messageTemplate: _templateController.text.trim(),
-        recordDurationSeconds: int.parse(_recordDurationController.text),
+        recordDurationSeconds: int.tryParse(_recordDurationController.text) ?? 30,
         autoTriggerEnabled: _autoTriggerEnabled,
-        immobilityTimeoutSeconds: int.parse(_immobilityTimeoutController.text),
+        immobilityTimeoutSeconds: int.tryParse(_immobilityTimeoutController.text) ?? 60,
         isDefault: false,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),

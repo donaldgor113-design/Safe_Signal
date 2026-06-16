@@ -58,6 +58,17 @@ class ScenarioModel {
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
+  Map<String, dynamic> toUpdateMap() => {
+        'name': name,
+        'contactIds': contactIds,
+        'messageTemplate': messageTemplate,
+        'recordDurationSeconds': recordDurationSeconds,
+        'autoTriggerEnabled': autoTriggerEnabled,
+        'immobilityTimeoutSeconds': immobilityTimeoutSeconds,
+        'isDefault': isDefault,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
   ScenarioEntity toEntity() => ScenarioEntity(
         id: id,
         userId: userId,

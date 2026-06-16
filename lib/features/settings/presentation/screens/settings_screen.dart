@@ -14,6 +14,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late bool _shakeSosEnabled;
+  late bool _immobilityEnabled;
   late bool _offgridEnabled;
 
   @override
@@ -21,6 +22,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.initState();
     final box = Hive.box('app_settings');
     _shakeSosEnabled = box.get('shake_sos_enabled', defaultValue: false);
+    _immobilityEnabled = box.get('immobility_detection_enabled', defaultValue: false);
     _offgridEnabled = box.get('offgrid_enabled', defaultValue: false);
   }
 
@@ -73,6 +75,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (v) {
               setState(() => _shakeSosEnabled = v);
               _updateSetting('shake_sos_enabled', v);
+            },
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.accessibility_new),
+            title: const Text('Нерухомість'),
+            subtitle: const Text('SOS якщо немає руху 60 сек'),
+            value: _immobilityEnabled,
+            onChanged: (v) {
+              setState(() => _immobilityEnabled = v);
+              _updateSetting('immobility_detection_enabled', v);
             },
           ),
           const Divider(),

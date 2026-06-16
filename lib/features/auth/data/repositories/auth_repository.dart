@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:safe_signal/core/constants/firebase_constants.dart';
 import 'package:safe_signal/core/errors/exceptions.dart';
+import 'package:safe_signal/core/services/notification_service.dart';
 
 class AuthRepository {
   final FirebaseAuth _auth;
@@ -93,6 +94,7 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
+    await NotificationService().clearToken();
     await _auth.signOut();
   }
 

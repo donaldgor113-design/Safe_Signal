@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:safe_signal/app/theme.dart';
 import 'package:safe_signal/features/contacts/data/models/contact_model.dart';
 import 'package:safe_signal/features/contacts/domain/entities/contact_entity.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:safe_signal/features/contacts/presentation/providers/contacts_provider.dart';
 
 class ContactsScreen extends ConsumerWidget {
@@ -149,10 +150,52 @@ class _ContactCard extends ConsumerWidget {
               ),
             ],
           ),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.send_outlined, size: 20),
+                tooltip: 'Тестове повідомлення',
+                onPressed: () => _sendTestNotification(context, contact.id),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
           onTap: () => context.push('/contacts/${contact.id}'),
         ),
       ),
+    );
+  }
+}
+
+Future<void> _sendTestNotification(BuildContext context, String contactId) async {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.showSnackBar(
+    const SnackBar(content: Text('Відправляю тестове повідомлення...')),
+  );
+
+  try {
+    final callable = FirebaseFunctions.instance.httpsCallable('sendTestNotification');
+    final result = await callable.call({'contactId': contactId});
+    final data = result.data as Map<String, dynamic>;
+
+    final sent = data.entries.where((e) => e.value == 'sent').map((e) => e.key);
+    final failed = data.entries.where((e) => e.value == 'failed').map((e) => e.key);
+
+    messenger.hideCurrentSnackBar();
+    if (sent.isNotEmpty) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Надіслано: ${sent.join(", ")}')),
+      );
+    } else if (failed.isNotEmpty) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Помилка: ${failed.join(", ")}')),
+      );
+    }
+  } catch (e) {
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Помилка відправки')),
     );
   }
 }

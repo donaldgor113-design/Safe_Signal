@@ -174,3 +174,71 @@ exports.generateSignedUrl = onCall(async (request) => {
     expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
   };
 });
+
+exports.sendTestNotification = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Authentication required");
+  }
+
+  const { contactId } = request.data;
+  const userId = request.auth.uid;
+  const db = getFirestore();
+
+  let userName = "Користувач SafeSignal";
+  try {
+    const userDoc = await db.collection("users").doc(userId).get();
+    if (userDoc.exists) {
+      userName = userDoc.data().displayName || userName;
+    }
+  } catch (_) {}
+
+  const contactDoc = await db.collection("contacts").doc(userId)
+    .collection("items").doc(contactId).get();
+
+  if (!contactDoc.exists) {
+    throw new HttpsError("not-found", "Contact not found");
+  }
+
+  const contact = contactDoc.data();
+  const channels = contact.notifyChannels || [];
+  const results = {};
+
+  const testMessage = `✅ Тестове повідомлення від ${userName} через SafeSignal. Якщо ви отримали це — канал працює.`;
+
+  if (channels.includes("sms") && contact.phone) {
+    try {
+      const twilio = require("twilio")(
+        twilioAccountSid.value(),
+        twilioAuthToken.value()
+      );
+      await twilio.messages.create({
+        body: testMessage,
+        from: twilioPhoneNumber.value(),
+        to: contact.phone,
+      });
+      results.sms = "sent";
+    } catch (e) {
+      results.sms = "failed";
+    }
+  }
+
+  if (channels.includes("telegram") && contact.telegramChatId) {
+    try {
+      const fetch = require("node-fetch");
+      const url = `https://api.telegram.org/bot${telegramBotToken.value()}/sendMessage`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: contact.telegramChatId,
+          text: testMessage,
+        }),
+      });
+      results.telegram = res.ok ? "sent" : "failed";
+    } catch (e) {
+      results.telegram = "failed";
+    }
+  }
+
+  return results;
+});

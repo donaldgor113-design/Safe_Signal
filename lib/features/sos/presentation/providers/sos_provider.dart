@@ -6,9 +6,19 @@ import 'package:safe_signal/core/services/storage_service.dart';
 import 'package:safe_signal/core/services/video_service.dart';
 import 'package:safe_signal/features/sos/data/models/alert_model.dart';
 import 'package:safe_signal/features/sos/data/repositories/alert_repository.dart';
+import 'package:safe_signal/core/services/offline_queue_service.dart';
 
 final alertRepositoryProvider = Provider<AlertRepository>((ref) {
   return AlertRepository();
+});
+
+final offlineQueueServiceProvider = Provider<OfflineQueueService>((ref) {
+  final service = OfflineQueueService(
+    alertRepository: ref.watch(alertRepositoryProvider),
+  );
+  service.setupAutoRetry();
+  ref.onDispose(() => service.dispose());
+  return service;
 });
 
 final alertsStreamProvider = StreamProvider<List<AlertModel>>((ref) {
