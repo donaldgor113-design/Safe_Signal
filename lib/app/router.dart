@@ -12,6 +12,7 @@ import 'package:safe_signal/features/medical_profile/presentation/screens/medica
 import 'package:safe_signal/features/scenarios/presentation/screens/scenarios_screen.dart';
 import 'package:safe_signal/features/sos/presentation/screens/home_screen.dart';
 import 'package:safe_signal/features/sos/presentation/screens/sos_flow_screen.dart';
+import 'package:safe_signal/features/scenarios/presentation/screens/add_scenario_screen.dart';
 import 'package:safe_signal/shared/widgets/app_shell.dart';
 import 'package:safe_signal/shared/widgets/onboarding_screen.dart';
 import 'package:safe_signal/features/settings/presentation/screens/settings_screen.dart';
@@ -106,6 +107,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => const NoTransitionPage(
               child: ScenariosScreen(),
             ),
+            routes: [
+              GoRoute(
+                path: 'add',
+                parentNavigatorKey: _rootNavigatorKey,
+                builder: (context, state) => const AddScenarioScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                parentNavigatorKey: _rootNavigatorKey,
+                builder: (context, state) => AddScenarioScreen(
+                  scenarioId: state.pathParameters['id'],
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: '/history',

@@ -1,7 +1,7 @@
 # SafeSignal — Progress Tracker
 
 **Початок розробки:** 2026-06-15  
-**Поточна фаза:** Тиждень 5–6 (SOS Flow)
+**Поточна фаза:** Тиждень 7–8 (SMS + Офлайн + Сценарії)
 
 ---
 
@@ -54,14 +54,14 @@
 
 | Задача | Статус | Дата | Примітки |
 |---|---|---|---|
-| Twilio SMS via Cloud Function | - | | |
-| Offline queue (Hive + connectivity_plus) | - | | |
-| Offline queue auto-retry on network restore | - | | |
-| Scenarios list screen | - | | |
-| Scenario create/edit screen | - | | |
-| Default scenario auto-create on registration | - | | |
-| Message template with variable substitution | - | | |
-| Active scenario switcher (bottom sheet on home) | - | | |
+| Twilio SMS via Cloud Function | DONE | 2026-06-16 | Cloud Functions sendSosAlert with SMS (Week 5-6) |
+| Offline queue (Hive + connectivity_plus) | DONE | 2026-06-16 | OfflineQueueService with Hive box persistence |
+| Offline queue auto-retry on network restore | DONE | 2026-06-16 | Connectivity listener + exponential backoff retry |
+| Scenarios list screen | DONE | 2026-06-16 | ScenariosScreen with list, delete, preview |
+| Scenario create/edit screen | DONE | 2026-06-16 | AddScenarioScreen with contact selection |
+| Default scenario auto-create on registration | WIP | 2026-06-16 | Repository method ready, needs auth integration |
+| Message template with variable substitution | DONE | 2026-06-16 | MessageTemplateService with {{variable}} substitution |
+| Active scenario switcher (bottom sheet on home) | - | | Pending — uses activeScenarioProvider |
 
 ## Тиждень 9–10: Полірування MVP
 
