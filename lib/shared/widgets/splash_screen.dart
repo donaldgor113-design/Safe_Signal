@@ -37,8 +37,45 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         context.go('/auth/login');
       }
     } else {
-      context.go('/home');
+      final disclaimerAccepted =
+          settings.get('disclaimer_accepted', defaultValue: false) as bool;
+      if (!disclaimerAccepted && mounted) {
+        await _showDisclaimerDialog();
+      }
+      if (mounted) context.go('/home');
     }
+  }
+
+  Future<void> _showDisclaimerDialog() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Важливо'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'SafeSignal — це допоміжний інструмент для екстрених ситуацій. '
+            'Додаток не замінює виклик служб екстреної допомоги (112, 103). '
+            'Доставка повідомлень залежить від наявності інтернет-з\'єднання '
+            'та працездатності сторонніх сервісів (SMS, Telegram).\n\n'
+            'Розробник не несе відповідальності за затримки або невдалу '
+            'доставку повідомлень. Завжди тримайте телефон зарядженим '
+            'та перевіряйте налаштування контактів перед подорожами.\n\n'
+            'Використовуючи додаток, ви погоджуєтесь з цими умовами.',
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () async {
+              final settings = Hive.box('app_settings');
+              await settings.put('disclaimer_accepted', true);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Приймаю'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

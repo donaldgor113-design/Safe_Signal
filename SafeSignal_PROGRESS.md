@@ -18,7 +18,7 @@
 | flutter_secure_storage setup | WIP | 2026-06-15 | Залежність додана, використання — ні |
 | Splash screen + auth redirect | DONE | 2026-06-15 | Auth + onboarding gate |
 | Onboarding (3 slides) | DONE | 2026-06-15 | 3 слайди + completion flow |
-| Disclaimer dialog (перший запуск) | WIP | 2026-06-15 | Текст є, UI dialog — ні |
+| Disclaimer dialog (перший запуск) | DONE | 2026-06-16 | AlertDialog in SplashScreen with Hive persistence |
 
 ## Тиждень 3–4: Медпрофіль і контакти
 
@@ -59,9 +59,9 @@
 | Offline queue auto-retry on network restore | DONE | 2026-06-16 | Connectivity listener + exponential backoff retry |
 | Scenarios list screen | DONE | 2026-06-16 | ScenariosScreen with list, delete, preview |
 | Scenario create/edit screen | DONE | 2026-06-16 | AddScenarioScreen with contact selection |
-| Default scenario auto-create on registration | WIP | 2026-06-16 | Repository method ready, needs auth integration |
+| Default scenario auto-create on registration | DONE | 2026-06-16 | Integrated in RegisterScreen after signUp |
 | Message template with variable substitution | DONE | 2026-06-16 | MessageTemplateService with {{variable}} substitution |
-| Active scenario switcher (bottom sheet on home) | - | | Pending — uses activeScenarioProvider |
+| Active scenario switcher (bottom sheet on home) | DONE | 2026-06-16 | Bottom sheet with scenario list + activeScenarioProvider |
 
 ## Тиждень 9–10: Полірування MVP
 

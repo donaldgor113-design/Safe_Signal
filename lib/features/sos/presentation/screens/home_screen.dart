@@ -5,6 +5,7 @@ import 'package:safe_signal/app/theme.dart';
 import 'package:safe_signal/core/constants/app_constants.dart';
 import 'package:safe_signal/features/medical_profile/presentation/providers/medical_profile_provider.dart';
 import 'package:safe_signal/features/contacts/presentation/providers/contacts_provider.dart';
+import 'package:safe_signal/features/scenarios/presentation/providers/scenarios_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -358,17 +359,31 @@ class _SosButtonState extends State<_SosButton>
   }
 }
 
-class _ScenarioSwitcher extends StatelessWidget {
+class _ScenarioSwitcher extends ConsumerWidget {
   final ThemeData theme;
 
   const _ScenarioSwitcher({required this.theme});
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // TODO: show scenario bottom sheet
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scenariosAsync = ref.watch(scenariosStreamProvider);
+    final activeId = ref.watch(activeScenarioProvider);
+
+    final activeName = scenariosAsync.whenOrNull(
+      data: (scenarios) {
+        if (scenarios.isEmpty) return 'Немає сценаріїв';
+        if (activeId != null) {
+          final active = scenarios.where((s) => s.id == activeId);
+          if (active.isNotEmpty) return active.first.name;
+        }
+        final defaultScenario = scenarios.where((s) => s.isDefault);
+        if (defaultScenario.isNotEmpty) return defaultScenario.first.name;
+        return scenarios.first.name;
       },
+    ) ?? 'Завантаження...';
+
+    return GestureDetector(
+      onTap: () => _showScenarioBottomSheet(context, ref),
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.xl,
@@ -388,7 +403,7 @@ class _ScenarioSwitcher extends StatelessWidget {
               ),
             ),
             Text(
-              'Основний',
+              activeName,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w500,
@@ -403,6 +418,82 @@ class _ScenarioSwitcher extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showScenarioBottomSheet(BuildContext context, WidgetRef ref) {
+    final scenariosAsync = ref.read(scenariosStreamProvider);
+    final scenarios = scenariosAsync.valueOrNull ?? [];
+
+    if (scenarios.isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final activeId = ref.read(activeScenarioProvider);
+
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: AppSpacing.md),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outline.withAlpha(80),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                'Оберіть сценарій',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ...scenarios.map((scenario) {
+                final isActive = scenario.id == activeId ||
+                    (activeId == null && scenario.isDefault);
+
+                return ListTile(
+                  leading: Icon(
+                    isActive
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: isActive
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.outline,
+                  ),
+                  title: Text(scenario.name),
+                  subtitle: Text(
+                    '${scenario.contactIds.length} контактів · ${scenario.recordDurationSeconds}с запис',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  trailing: scenario.isDefault
+                      ? Chip(
+                          label: const Text('За замовч.'),
+                          labelStyle: theme.textTheme.bodySmall,
+                          padding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                        )
+                      : null,
+                  onTap: () {
+                    ref.read(activeScenarioProvider.notifier).state =
+                        scenario.id;
+                    Navigator.pop(ctx);
+                  },
+                );
+              }),
+              const SizedBox(height: AppSpacing.lg),
+            ],
+          ),
+        );
+      },
     );
   }
 }

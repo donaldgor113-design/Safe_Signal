@@ -5,6 +5,7 @@ import 'package:safe_signal/app/theme.dart';
 import 'package:safe_signal/core/errors/exceptions.dart';
 import 'package:safe_signal/core/utils/validators.dart';
 import 'package:safe_signal/features/auth/presentation/providers/auth_provider.dart';
+import 'package:safe_signal/features/scenarios/presentation/providers/scenarios_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -40,6 +41,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password: _passwordController.text,
             displayName: _nameController.text.trim(),
           );
+      await ref.read(scenariosRepositoryProvider).createDefaultScenario();
       if (mounted) context.go('/auth/verify-email');
     } on SafeSignalException catch (e) {
       if (mounted) {
