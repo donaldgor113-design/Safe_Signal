@@ -8,6 +8,8 @@ import 'package:safe_signal/features/auth/presentation/screens/verify_email_scre
 import 'package:safe_signal/features/contacts/presentation/screens/contacts_screen.dart';
 import 'package:safe_signal/features/contacts/presentation/screens/add_contact_screen.dart';
 import 'package:safe_signal/features/history/presentation/screens/history_screen.dart';
+import 'package:safe_signal/features/history/presentation/screens/alert_detail_screen.dart';
+import 'package:safe_signal/features/medical_profile/presentation/screens/qr_medical_card_screen.dart';
 import 'package:safe_signal/features/medical_profile/presentation/screens/medical_profile_screen.dart';
 import 'package:safe_signal/features/scenarios/presentation/screens/scenarios_screen.dart';
 import 'package:safe_signal/features/sos/presentation/screens/home_screen.dart';
@@ -134,6 +136,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/settings',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/history/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => AlertDetailScreen(
+          alertId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/qr-card',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const QrMedicalCardScreen(),
       ),
     ],
   );

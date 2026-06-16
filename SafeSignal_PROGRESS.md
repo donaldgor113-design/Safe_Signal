@@ -67,14 +67,14 @@
 
 | Задача | Статус | Дата | Примітки |
 |---|---|---|---|
-| Alert history screen | - | | |
-| Alert detail screen (video player, map, contacts) | - | | |
-| QR medical card (basic) | - | | |
-| Status bar on home (GPS, network, profile icons) | - | | |
-| Test notification button for contacts | - | | |
-| Immobility detection (background service) | - | | |
-| Auto-trigger SOS (background, no video) | - | | |
-| Off-Grid mode settings screen | - | | |
+| Alert history screen | DONE | 2026-06-16 | AlertsStreamProvider + list with status badges |
+| Alert detail screen (video player, map, contacts) | DONE | 2026-06-16 | Video player + location + delivery status |
+| QR medical card (basic) | DONE | 2026-06-16 | qr_flutter with medical profile data |
+| Status bar on home (GPS, network, profile icons) | DONE | 2026-06-15 | Already in home_screen.dart Week 3-4 |
+| Test notification button for contacts | WIP | 2026-06-16 | Needs Cloud Function integration |
+| Immobility detection (background service) | - | | Week 9-10 Quick SOS |
+| Auto-trigger SOS (background, no video) | - | | Week 9-10 Quick SOS |
+| Off-Grid mode settings screen | DONE | 2026-06-16 | Settings screen with Hive toggle |
 
 ## Тиждень 9–10 (продовження): Quick SOS
 
