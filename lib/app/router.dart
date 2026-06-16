@@ -68,6 +68,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const SosFlowScreen(),
       ),
+      GoRoute(
+        path: '/sos',
+        parentNavigatorKey: _rootNavigatorKey,
+        redirect: (_, __) => '/sos-direct',
+      ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) => AppShell(child: child),

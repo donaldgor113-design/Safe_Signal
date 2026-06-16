@@ -6,12 +6,61 @@ import 'package:safe_signal/core/constants/app_constants.dart';
 import 'package:safe_signal/features/medical_profile/presentation/providers/medical_profile_provider.dart';
 import 'package:safe_signal/features/contacts/presentation/providers/contacts_provider.dart';
 import 'package:safe_signal/features/scenarios/presentation/providers/scenarios_provider.dart';
+import 'package:safe_signal/core/services/shake_detection_service.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final _shakeService = ShakeDetectionService();
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeService.start(
+      onShakeDetected: () {
+        if (mounted) {
+          _showShakeConfirmation();
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _shakeService.stop();
+    super.dispose();
+  }
+
+  void _showShakeConfirmation() {
+    showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Виявлено трясіння'),
+        content: const Text('Відправити SOS сигнал?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Скасувати'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx, true);
+              context.push('/sos-direct');
+            },
+            child: const Text('SOS'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final ssColors = theme.extension<SafeSignalColors>()!;
     final profileAsync = ref.watch(medicalProfileStreamProvider);

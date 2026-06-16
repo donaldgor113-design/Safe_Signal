@@ -80,13 +80,13 @@
 
 | Задача | Статус | Дата | Примітки |
 |---|---|---|---|
-| Deep link safesignal://sos (GoRouter) | - | | |
+| Deep link safesignal://sos (GoRouter) | DONE | 2026-06-16 | /sos route redirects to /sos-direct |
 | Home Screen Widget (home_widget, Android) | - | | |
 | Home Screen Widget (iOS widget extension) | - | | |
 | Persistent Notification з SOS кнопкою (Android) | - | | Foreground Service |
-| Shake-to-SOS detection | - | | sensors_plus |
-| Shake confirmation notification | - | | |
-| Shake settings toggle (Settings screen) | - | | |
+| Shake-to-SOS detection | DONE | 2026-06-16 | ShakeDetectionService with sensors_plus, 3 shakes in 1s |
+| Shake confirmation notification | DONE | 2026-06-16 | AlertDialog confirmation before triggering SOS |
+| Shake settings toggle (Settings screen) | DONE | 2026-06-16 | Already in settings_screen.dart (Hive toggle) |
 | Quick Settings Tile (Android, Kotlin) | - | | Нативний код |
 | Real device testing (iOS + Android) | - | | |
 | App Store / Google Play preparation | - | | |
