@@ -1,7 +1,7 @@
 # SafeSignal — Progress Tracker
 
 **Початок розробки:** 2026-06-15  
-**Поточна фаза:** Тиждень 3–4 (Медпрофіль і контакти)
+**Поточна фаза:** Тиждень 5–6 (SOS Flow)
 
 ---
 
@@ -37,18 +37,18 @@
 
 | Задача | Статус | Дата | Примітки |
 |---|---|---|---|
-| Home screen з SOS button | - | | |
-| SOS button — long press 2s + countdown 3s | - | | |
-| SOS cancel during countdown | - | | |
-| Video recording (camera plugin) | - | | |
-| GPS location (geolocator) | - | | |
-| Reverse geocoding → address | - | | |
-| Video upload → Firebase Storage | - | | |
-| Alert save → Firestore | - | | |
-| Telegram Bot — send message (Cloud Function) | - | | |
-| Signed URL generation (Cloud Function) | - | | |
-| SOS confirmation screen + delivery status | - | | |
-| Self-notification via FCM Push | - | | |
+| Home screen з SOS button | DONE | 2026-06-16 | Long press 2s with progress ring, disabled state if no contacts |
+| SOS button — long press 2s + countdown 3s | DONE | 2026-06-16 | Hold animation + 3-sec countdown with scale animation |
+| SOS cancel during countdown | DONE | 2026-06-16 | Cancel button during countdown + recording |
+| Video recording (camera plugin) | DONE | 2026-06-16 | Front camera, VideoService with init/start/stop |
+| GPS location (geolocator) | DONE | 2026-06-16 | LocationService with permission handling |
+| Reverse geocoding → address | DONE | 2026-06-16 | geocoding plugin in LocationService |
+| Video upload → Firebase Storage | DONE | 2026-06-16 | StorageService with Firebase Storage |
+| Alert save → Firestore | DONE | 2026-06-16 | AlertRepository + AlertModel with Firestore CRUD |
+| Telegram Bot — send message (Cloud Function) | DONE | 2026-06-16 | functions/index.js sendSosAlert with Telegram Bot API |
+| Signed URL generation (Cloud Function) | DONE | 2026-06-16 | functions/index.js generateSignedUrl callable |
+| SOS confirmation screen + delivery status | DONE | 2026-06-16 | 4-phase UI: countdown → recording → sending → done/offline |
+| Self-notification via FCM Push | WIP | 2026-06-16 | Cloud Function sends — client FCM token update needed |
 
 ## Тиждень 7–8: SMS + Офлайн + Сценарії
 

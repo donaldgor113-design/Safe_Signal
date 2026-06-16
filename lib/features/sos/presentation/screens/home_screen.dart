@@ -48,7 +48,7 @@ class HomeScreen extends ConsumerWidget {
             ),
           Expanded(
             child: Center(
-              child: _SosButton(ssColors: ssColors),
+              child: _SosButton(ssColors: ssColors, disabled: noContacts),
             ),
           ),
           _ScenarioSwitcher(theme: theme),
@@ -193,17 +193,21 @@ class _StatusIcon extends StatelessWidget {
 
 class _SosButton extends StatefulWidget {
   final SafeSignalColors ssColors;
+  final bool disabled;
 
-  const _SosButton({required this.ssColors});
+  const _SosButton({required this.ssColors, this.disabled = false});
 
   @override
   State<_SosButton> createState() => _SosButtonState();
 }
 
 class _SosButtonState extends State<_SosButton>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
+  late final AnimationController _holdController;
+  late final Animation<double> _holdProgress;
+  bool _isHolding = false;
 
   @override
   void initState() {
@@ -215,80 +219,137 @@ class _SosButtonState extends State<_SosButton>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    _holdController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: AppConstants.sosHoldDurationMs),
+    );
+    _holdProgress = Tween<double>(begin: 0.0, end: 1.0).animate(_holdController);
+    _holdController.addStatusListener((status) {
+      if (status == AnimationStatus.completed && _isHolding) {
+        _isHolding = false;
+        context.push('/sos-direct');
+      }
+    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _holdController.dispose();
     super.dispose();
   }
 
-  void _onSosPressed() {
-    context.push('/sos-direct');
+  void _onPanDown() {
+    if (widget.disabled) return;
+    setState(() => _isHolding = true);
+    _holdController.forward(from: 0);
+  }
+
+  void _onPanUp() {
+    if (!_isHolding) return;
+    setState(() => _isHolding = false);
+    _holdController.reverse();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDisabled = widget.disabled;
+    final buttonColor = isDisabled
+        ? widget.ssColors.statusInactive
+        : widget.ssColors.sosRed;
+
     return SizedBox(
       width: 220,
       height: 220,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          AnimatedBuilder(
-            animation: _pulseAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _pulseAnimation.value,
-                child: Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: widget.ssColors.sosGlow.withAlpha(
-                      (76 * (1.3 - _pulseAnimation.value) / 0.3).round(),
+          if (!isDisabled)
+            AnimatedBuilder(
+              animation: _pulseAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _pulseAnimation.value,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: widget.ssColors.sosGlow.withAlpha(
+                        (76 * (1.3 - _pulseAnimation.value) / 0.3).round(),
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
           GestureDetector(
-            onLongPress: _onSosPressed,
-            child: Container(
-              width: 170,
-              height: 170,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: widget.ssColors.sosRed,
-                boxShadow: [
-                  BoxShadow(
-                    color: widget.ssColors.sosGlow,
-                    blurRadius: 24,
-                    spreadRadius: 4,
+            onTapDown: (_) => _onPanDown(),
+            onTapUp: (_) => _onPanUp(),
+            onTapCancel: _onPanUp,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 170,
+                  height: 170,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: buttonColor,
+                    boxShadow: isDisabled
+                        ? null
+                        : [
+                            BoxShadow(
+                              color: widget.ssColors.sosGlow,
+                              blurRadius: 24,
+                              spreadRadius: 4,
+                            ),
+                          ],
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'SOS',
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'SOS',
+                        style:
+                            Theme.of(context).textTheme.displaySmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 2,
+                                ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isDisabled ? 'Додай контакт' : 'Утримуй 2 сек',
+                        style:
+                            Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.white.withAlpha(179),
+                                ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!isDisabled)
+                  AnimatedBuilder(
+                    animation: _holdProgress,
+                    builder: (context, _) {
+                      if (_holdProgress.value == 0) {
+                        return const SizedBox.shrink();
+                      }
+                      return SizedBox(
+                        width: 180,
+                        height: 180,
+                        child: CircularProgressIndicator(
+                          value: _holdProgress.value,
+                          strokeWidth: 4,
                           color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 2,
+                          backgroundColor: Colors.white24,
                         ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Утримуй 2 сек',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withAlpha(179),
-                        ),
-                  ),
-                ],
-              ),
+              ],
             ),
           ),
         ],
