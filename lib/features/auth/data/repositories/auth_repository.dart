@@ -44,15 +44,13 @@ class AuthRepository {
       });
 
       return user;
-    } on FirebaseAuthException {
-      rethrow;
     } on FirebaseException catch (e) {
-      throw FirebaseAuthException(
+      throw AuthException(
         _mapFirebaseAuthError(e.code),
         technicalDetails: e.toString(),
       );
     } catch (e) {
-      throw FirebaseAuthException(
+      throw AuthException(
         'Помилка реєстрації. Спробуйте ще раз',
         technicalDetails: e.toString(),
       );
@@ -70,12 +68,12 @@ class AuthRepository {
       );
       return credential.user!;
     } on FirebaseException catch (e) {
-      throw FirebaseAuthException(
+      throw AuthException(
         _mapFirebaseAuthError(e.code),
         technicalDetails: e.toString(),
       );
     } catch (e) {
-      throw FirebaseAuthException(
+      throw AuthException(
         'Помилка входу. Спробуйте ще раз',
         technicalDetails: e.toString(),
       );
@@ -86,7 +84,7 @@ class AuthRepository {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseException catch (e) {
-      throw FirebaseAuthException(
+      throw AuthException(
         _mapFirebaseAuthError(e.code),
         technicalDetails: e.toString(),
       );

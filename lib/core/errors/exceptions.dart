@@ -19,8 +19,8 @@ class NetworkTimeoutException extends SafeSignalException {
             technicalDetails: technicalDetails);
 }
 
-class FirebaseAuthException extends SafeSignalException {
-  const FirebaseAuthException(super.message, {String? technicalDetails})
+class AuthException extends SafeSignalException {
+  const AuthException(super.message, {String? technicalDetails})
       : super(technicalDetails: technicalDetails);
 }
 
